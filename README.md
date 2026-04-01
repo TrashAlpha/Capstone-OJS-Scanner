@@ -10,6 +10,55 @@ Project ini merupakan implementasi **Open Journal Systems (OJS)** berbasis Docke
 
 ---
 
+# 🤝 How To Contribute
+
+Ikuti langkah berikut untuk berkontribusi dengan baik:
+
+## 1. Buat Branch Baru
+
+**WAJIB** membuat branch baru untuk setiap perubahan (jangan langsung ke `main`):
+
+```bash
+git checkout -b feature/nama-fitur
+```
+
+Contoh:
+
+```bash
+git checkout -b feature/add-scanner-endpoint
+git checkout -b fix/nginx-routing
+```
+
+## 2. Lakukan Perubahan
+
+* Tambahkan fitur / perbaikan
+* Pastikan project tetap bisa dijalankan
+* Ikuti standar commit (semantic commit jika ada)
+  
+
+## 3. Commit & Push
+
+```bash
+git add .
+git commit -m "feat: add scanner endpoint"
+git push origin feature/nama-fitur
+```
+
+
+## 4. Buat Pull Request
+
+* Buka repository utama
+* Klik **Compare & Pull Request**
+* Jelaskan perubahan yang dilakukan
+
+
+
+## 5. Review
+
+Perubahan akan direview bersama sebelum merge ke branch `main`.
+
+---
+
 # 🖥️ Persyaratan
 
 ## 🔹 Windows
