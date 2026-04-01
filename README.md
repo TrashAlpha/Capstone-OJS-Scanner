@@ -33,7 +33,7 @@ git checkout -b fix/nginx-routing
 
 * Tambahkan fitur / perbaikan
 * Pastikan project tetap bisa dijalankan
-* Ikuti standar commit (semantic commit jika ada)
+* Ikuti standar commit (semantic commit)
   
 
 ## 3. Commit & Push
