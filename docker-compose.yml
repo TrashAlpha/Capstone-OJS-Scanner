@@ -1,5 +1,24 @@
 services:
+  # =========================
+  # NGINX (REVERSE PROXY)
+  # =========================
+  nginx:
+    image: nginx:latest
+    container_name: nginx-proxy
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - ojs
+      - dashboard
+    networks:
+      - appnet
+
+  # =========================
   # OJS DATABASE (MySQL)
+  # =========================
   ojs-db:
     image: mysql:8.0
     container_name: ojs-mysql
@@ -14,15 +33,15 @@ services:
     networks:
       - appnet
 
+  # =========================
   # OJS SERVER
+  # =========================
   ojs:
     image: pkpofficial/ojs:3_5_0-3
     container_name: ojs-app
     restart: always
     depends_on:
       - ojs-db
-    ports:
-      - "8080:80"
     environment:
       DATABASE_HOST: ojs-db
       DATABASE_NAME: ojs
@@ -33,19 +52,21 @@ services:
     networks:
       - appnet
 
+  # =========================
   # SCANNER DB (MongoDB)
+  # =========================
   scanner-db:
     image: mongo:6
     container_name: mongo-scanner
     restart: always
-    ports:
-      - "27017:27017"
     volumes:
       - mongo_data:/data/db
     networks:
       - appnet
 
-  # SCANNER SERVICE (Python)
+  # =========================
+  # SCANNER SERVICE
+  # =========================
   scanner:
     build: ./scanner
     container_name: scanner-service
@@ -54,40 +75,46 @@ services:
       - ojs
       - scanner-db
     environment:
-      OJS_URL: http://ojs:80
+      OJS_URL: http://ojs
       MONGO_URI: mongodb://scanner-db:27017
     networks:
       - appnet
 
-  # RISK ENGINE (Python)
+  # =========================
+  # RISK ENGINE SERVICE
+  # =========================
   risk-engine:
     build: ./risk-engine
-    container_name: risk-engine
+    container_name: risk-engine-service
     restart: always
     depends_on:
-      - scanner-db
+      - scanner
     environment:
-      MONGO_URI: mongodb://scanner-db:27017
+      SCANNER_URL: http://scanner:5000
     networks:
       - appnet
 
+  # =========================
   # DASHBOARD (Laravel)
+  # =========================
   dashboard:
     build: ./dashboard
     container_name: laravel-dashboard
     restart: always
     depends_on:
       - risk-engine
-    ports:
-      - "8000:8000"
     networks:
       - appnet
 
+# =========================
 # VOLUMES
+# =========================
 volumes:
   ojs_db_data:
   mongo_data:
 
+# =========================
 # NETWORK
+# =========================
 networks:
   appnet:
