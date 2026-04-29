@@ -23,6 +23,8 @@ services:
     image: mysql:8.0
     container_name: ojs-mysql
     restart: always
+    ports:
+      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root123
       MYSQL_DATABASE: ojs
@@ -55,12 +57,19 @@ services:
   # =========================
   # SCANNER DB (MongoDB)
   # =========================
-  scanner-db:
-    image: mongo:6
-    container_name: mongo-scanner
+  app-db:
+    image: mysql:8.0
+    container_name: mysql-app
     restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: appdb
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: app123
     volumes:
-      - mongo_data:/data/db
+      - app_db_data:/var/lib/mysql
     networks:
       - appnet
 
@@ -73,10 +82,13 @@ services:
     restart: always
     depends_on:
       - ojs
-      - scanner-db
+      - app-db
     environment:
       OJS_URL: http://ojs
-      MONGO_URI: mongodb://scanner-db:27017
+      DATABASE_HOST: app-db
+      DATABASE_NAME: appdb
+      DATABASE_USER: appuser
+      DATABASE_PASSWORD: app123
     networks:
       - appnet
 
@@ -91,6 +103,10 @@ services:
       - scanner
     environment:
       SCANNER_URL: http://scanner:5000
+      DATABASE_HOST: app-db
+      DATABASE_NAME: appdb
+      DATABASE_USER: appuser
+      DATABASE_PASSWORD: app123
     networks:
       - appnet
 
@@ -103,6 +119,11 @@ services:
     restart: always
     depends_on:
       - risk-engine
+    environment:
+      DB_HOST: app-db
+      DB_DATABASE: appdb
+      DB_USERNAME: appuser
+      DB_PASSWORD: app123
     networks:
       - appnet
 
@@ -111,7 +132,7 @@ services:
 # =========================
 volumes:
   ojs_db_data:
-  mongo_data:
+  app_db_data:
 
 # =========================
 # NETWORK
