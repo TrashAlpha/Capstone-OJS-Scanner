@@ -1,8 +1,17 @@
 FROM python:3.10
 
 WORKDIR /app
+
 COPY . .
 
-RUN pip install requests pymongo beautifulsoup4 flask
+RUN pip install --no-cache-dir \
+    requests \
+    beautifulsoup4 \
+    flask \
+    mysql-connector-python
+
+ENV PORT=8080
+
+EXPOSE 8080
 
 CMD ["python", "app.py"]
