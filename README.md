@@ -6,7 +6,7 @@ Project ini merupakan implementasi **Open Journal Systems (OJS)** berbasis Docke
 * 📰 OJS (Core System)
 * 🧠 Risk Engine (Python)
 * 🔍 Scanner Service (Python)
-* 🗄️ MySQL & MongoDB
+* 🗄️ MySQL
 
 ---
 
@@ -74,7 +74,7 @@ Pastikan:
 
 ---
 
-## 🔹 Linux / Ubuntu
+## 🔹 Linux / Ubuntu (Lebih Disarankan)
 
 Install:
 
@@ -161,7 +161,7 @@ Pastikan semua berjalan:
 * ojs-mysql
 * scanner-service
 * risk-engine-service
-* mongo-scanner
+* app-mysql
 * laravel-dashboard
 
 ---
