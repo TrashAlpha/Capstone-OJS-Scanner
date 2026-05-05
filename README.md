@@ -2,7 +2,7 @@
 
 Project ini merupakan implementasi **Open Journal Systems (OJS)** berbasis Docker dengan beberapa services:
 
-* 🔁 Reverse Proxy (Nginx)
+* 🔁 Reverse Proxy (Nginx) -> tidak digunakan saat deployment gcp
 * 📰 OJS (Core System)
 * 🧠 Risk Engine (Python)
 * 🔍 Scanner Service (Python)
