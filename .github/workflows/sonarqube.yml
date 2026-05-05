@@ -34,4 +34,5 @@ jobs:
           # Additional arguments for the sonarcloud scanner
           args: |
             -Dsonar.projectKey=TrashAlpha_Capstone-OJS-Scanner
+            -Dsonar.organization=trashalpha
             -Dsonar.verbose=true
