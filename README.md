@@ -12,7 +12,7 @@ Project ini merupakan implementasi **Open Journal Systems (OJS)** berbasis Docke
 
 # 🤝 How To Contribute
 
-Ikuti langkah berikut untuk berkontribusi dengan baik:
+Ikuti langkah berikut untuk berkontribusi pada repo:
 
 ## 1. Buat Branch Baru
 
