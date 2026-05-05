@@ -1,6 +1,6 @@
 # 📦 OJS Dockerized System with Scanner & Risk Engine
 
-Project ini merupakan implementasi **Open Journal Systems (OJS)** berbasis Docker dengan arsitektur microservices:
+Project ini merupakan implementasi **Open Journal Systems (OJS)** berbasis Docker dengan beberapa services:
 
 * 🔁 Reverse Proxy (Nginx)
 * 📰 OJS (Core System)
