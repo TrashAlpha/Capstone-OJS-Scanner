@@ -99,6 +99,8 @@ services:
     build: ./risk-engine
     container_name: risk-engine-service
     restart: always
+    ports:
+    - "5000:5000"
     depends_on:
       - scanner
     environment:
