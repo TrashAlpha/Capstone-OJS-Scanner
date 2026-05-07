@@ -1,18 +1,18 @@
 # 📦 OJS Dockerized System with Scanner & Risk Engine
 
-Project ini merupakan implementasi **Open Journal Systems (OJS)** berbasis Docker dengan arsitektur microservices:
+Project ini merupakan implementasi **Open Journal Systems (OJS)** berbasis Docker dengan beberapa services:
 
-* 🔁 Reverse Proxy (Nginx)
+* 🔁 Reverse Proxy (Nginx) -> tidak digunakan saat deployment di GCP
 * 📰 OJS (Core System)
 * 🧠 Risk Engine (Python)
 * 🔍 Scanner Service (Python)
-* 🗄️ MySQL & MongoDB
+* 🗄️ MySQL
 
 ---
 
 # 🤝 How To Contribute
 
-Ikuti langkah berikut untuk berkontribusi dengan baik:
+Ikuti langkah berikut untuk melakukan kontribusi pada repositori:
 
 ## 1. Buat Branch Baru
 
@@ -74,7 +74,7 @@ Pastikan:
 
 ---
 
-## 🔹 Linux / Ubuntu
+## 🔹 Linux / Ubuntu (Lebih Disarankan)
 
 Install:
 
@@ -161,7 +161,7 @@ Pastikan semua berjalan:
 * ojs-mysql
 * scanner-service
 * risk-engine-service
-* mongo-scanner
+* app-mysql
 * laravel-dashboard
 
 ---
