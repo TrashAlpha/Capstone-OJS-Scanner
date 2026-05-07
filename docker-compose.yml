@@ -119,6 +119,8 @@ services:
     build: ./dashboard
     container_name: laravel-dashboard
     restart: always
+    ports:
+      - "8000:8000"
     depends_on:
       - risk-engine
     environment:
