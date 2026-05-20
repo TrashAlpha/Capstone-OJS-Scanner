@@ -1,7 +1,7 @@
 # =========================
 # BASE IMAGE
 # =========================
-FROM php:8.2-cli
+FROM php:8.4-cli
 
 # =========================
 # INSTALL SYSTEM DEPENDENCIES
@@ -43,7 +43,7 @@ COPY . .
 # =========================
 # INSTALL PHP DEPENDENCIES
 # =========================
-RUN composer install --ignore-platform-reqs --no-interaction --prefer-dist
+RUN composer install --no-interaction --prefer-dist
 
 # =========================
 # INSTALL NODE DEPENDENCIES
