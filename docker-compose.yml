@@ -113,6 +113,19 @@ services:
       - appnet
 
   # =========================
+  # TELEGRAM BOT (POLLING)
+  # =========================
+  telegram-bot:
+    build: ./telegram-bot
+    container_name: telegram-bot-service
+    restart: always
+    environment:
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-ojsscannerbot}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-8093324098:AAEuipxc8bNxTvN3pXctSmo6HRoXD-iNkv0}
+    networks:
+      - appnet
+
+  # =========================
   # DASHBOARD (Laravel)
   # =========================
   dashboard:
@@ -123,6 +136,7 @@ services:
       - "8000:8000"
     depends_on:
       - risk-engine
+      - app-db
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
@@ -136,6 +150,10 @@ services:
       SESSION_DRIVER: file
       CACHE_STORE: file
       QUEUE_CONNECTION: sync
+      SCANNER_URL: http://scanner:5000
+      RISK_ENGINE_URL: http://risk-engine:5000
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-ojsscannerbot}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-8093324098:AAEuipxc8bNxTvN3pXctSmo6HRoXD-iNkv0}
     networks:
       - appnet
 
