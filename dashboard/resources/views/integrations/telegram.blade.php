@@ -66,7 +66,7 @@
         <li>
           Search for our bot
           @if ($botUsername)
-            <a href="https://t.me/{{ $botUsername }}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff; text-decoration:none;">@{{ $botUsername }}</a>.
+            <a href="https://t.me/{{ $botUsername }}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff; text-decoration:none;">@{{-- --}}{{ $botUsername }}</a>.
           @else
             from your Telegram search.
           @endif
@@ -86,10 +86,14 @@
           Telegram alerts are not connected yet.
         @endif
       </div>
+      <div style="margin-top:10px; font-size:11px; color:#8b949e; line-height:1.7;">
+        <div>Bot username detected: <span class="mono">{{ $botUsername ?: 'NOT DETECTED' }}</span></div>
+        <div>Bot token detected: <span class="mono">{{ $botTokenPresent ? 'YES' : 'NO' }}</span></div>
+      </div>
       @if ($botUsername)
       <div style="margin-top:10px; font-size:11px;">
         <a href="https://t.me/{{ $botUsername }}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff; text-decoration:none;">
-          Open @{{ $botUsername }} in Telegram
+          Open @{{-- --}}{{ $botUsername }} in Telegram
         </a>
       </div>
       @endif

@@ -9,6 +9,16 @@ use Illuminate\Support\Facades\Log;
 
 class TelegramService
 {
+    public function getBotUsername(): ?string
+    {
+        return $this->resolveSetting('bot_username');
+    }
+
+    public function hasBotToken(): bool
+    {
+        return filled($this->getBotToken());
+    }
+
     public function sendScanSummary(User $user, ScanRun $scanRun): bool
     {
         if (! $this->canSendToUser($user)) {
@@ -24,6 +34,13 @@ class TelegramService
     public function sendTestMessage(User $user): bool
     {
         if (! $this->canSendToUser($user)) {
+            Log::info('Telegram test skipped', [
+                'user_id' => $user->id,
+                'enabled' => $user->telegram_notifications_enabled,
+                'chat_id_present' => filled($user->telegram_chat_id),
+                'bot_token_present' => $this->hasBotToken(),
+            ]);
+
             return false;
         }
 
@@ -40,7 +57,7 @@ class TelegramService
 
     public function sendMessage(string $chatId, string $message, array $context = []): bool
     {
-        $botToken = config('services.telegram.bot_token');
+        $botToken = $this->getBotToken();
 
         if (! $botToken || $chatId === '') {
             return false;
@@ -56,6 +73,7 @@ class TelegramService
         if (! $response->successful()) {
             Log::warning('Telegram notification failed', array_merge($context, [
                 'chat_id' => $chatId,
+                'status' => $response->status(),
                 'response' => $response->body(),
             ]));
 
@@ -67,9 +85,27 @@ class TelegramService
 
     private function canSendToUser(User $user): bool
     {
-        return (bool) config('services.telegram.bot_token')
+        return $this->hasBotToken()
             && $user->telegram_notifications_enabled
             && filled($user->telegram_chat_id);
+    }
+
+    private function getBotToken(): ?string
+    {
+        return $this->resolveSetting('bot_token');
+    }
+
+    private function resolveSetting(string $key): ?string
+    {
+        $configValue = config("services.telegram.{$key}");
+        if (filled($configValue)) {
+            return (string) $configValue;
+        }
+
+        $envKey = 'TELEGRAM_'.strtoupper($key);
+        $runtimeValue = getenv($envKey) ?: ($_ENV[$envKey] ?? null) ?: ($_SERVER[$envKey] ?? null);
+
+        return filled($runtimeValue) ? (string) $runtimeValue : null;
     }
 
     private function buildScanSummaryMessage(ScanRun $scanRun): string
