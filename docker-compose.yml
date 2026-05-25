@@ -7,7 +7,7 @@ services:
     container_name: nginx-proxy
     restart: always
     ports:
-      - "80:80"
+      - "8080:80"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
@@ -24,7 +24,7 @@ services:
     container_name: ojs-mysql
     restart: always
     ports:
-      - "3306:3306"
+      - "3308:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root123
       MYSQL_DATABASE: ojs
@@ -39,7 +39,7 @@ services:
   # OJS SERVER
   # =========================
   ojs:
-    image: pkpofficial/ojs:3_5_0-3
+    build: ./ojs
     container_name: ojs-app
     restart: always
     depends_on:
@@ -49,20 +49,24 @@ services:
       DATABASE_NAME: ojs
       DATABASE_USER: ojsuser
       DATABASE_PASSWORD: ojs123
+      # Nonaktifkan koneksi ke server PKP (pkp.sfu.ca)
+      # yang menyebabkan delay & 500 error saat ganti halaman
+      OJS_SHOW_UPGRADE_WARNING: 0
+      OJS_DISABLE_BEACON: 1
     volumes:
       - ./ojs-files:/var/www/html/files
     networks:
       - appnet
 
   # =========================
-  # SCANNER DB (MongoDB)
+  # SCANNER DB
   # =========================
   app-db:
     image: mysql:8.0
     container_name: mysql-app
     restart: always
     ports:
-      - "3307:3306"
+      - "3309:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root123
       MYSQL_DATABASE: appdb
@@ -100,7 +104,7 @@ services:
     container_name: risk-engine-service
     restart: always
     ports:
-    - "5000:5000"
+      - "5001:5000"
     depends_on:
       - scanner
     environment:
@@ -120,7 +124,7 @@ services:
     container_name: laravel-dashboard
     restart: always
     ports:
-      - "8000:8000"
+      - "8181:8000"
     depends_on:
       - risk-engine
     environment:
@@ -138,8 +142,8 @@ volumes:
   ojs_db_data:
   app_db_data:
 
-# =========================
-# NETWORK
-# =========================
+    # =========================
+    # NETWORK
+    # =========================
 networks:
   appnet:
