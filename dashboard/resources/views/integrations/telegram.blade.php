@@ -66,7 +66,7 @@
         <li>
           Search for our bot
           @if ($botUsername)
-            <a href="https://t.me/{{ $botUsername }}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff; text-decoration:none;">@{{-- --}}{{ $botUsername }}</a>.
+            <a href="https://t.me/{{ $botUsername }}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff; text-decoration:none;">&#64;{{ $botUsername }}</a>.
           @else
             from your Telegram search.
           @endif
@@ -93,7 +93,7 @@
       @if ($botUsername)
       <div style="margin-top:10px; font-size:11px;">
         <a href="https://t.me/{{ $botUsername }}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff; text-decoration:none;">
-          Open @{{-- --}}{{ $botUsername }} in Telegram
+          Open &#64;{{ $botUsername }} in Telegram
         </a>
       </div>
       @endif
