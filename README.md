@@ -249,6 +249,24 @@ docker compose logs -f
 docker compose restart
 ```
 
+## Error `fatal: not a git repository (or any of the parent directories): .git`
+
+Error ini muncul kalau perintah Git dijalankan di folder yang **bukan hasil clone repository**.
+
+Pastikan terminal ada di folder project ini:
+
+```bash
+cd /path/ke/Capstone-OJS-Scanner
+git branch
+```
+
+Kalau folder `.git` tidak ada, clone ulang repository:
+
+```bash
+git clone https://github.com/TrashAlpha/Capstone-OJS-Scanner.git
+cd Capstone-OJS-Scanner
+```
+
 ---
 
 # ⚠️ Catatan Penting
