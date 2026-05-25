@@ -1,3 +1,6 @@
-flask
+pydantic
+fastapi
+uvicorn
 requests
 cvss
+pymongo
