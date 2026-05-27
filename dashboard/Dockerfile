@@ -1,7 +1,7 @@
 # =========================
 # BASE IMAGE
 # =========================
-FROM php:8.2-cli
+FROM php:8.4-cli
 
 # =========================
 # INSTALL SYSTEM DEPENDENCIES
@@ -43,7 +43,7 @@ COPY . .
 # =========================
 # INSTALL PHP DEPENDENCIES
 # =========================
-RUN composer install --ignore-platform-reqs --no-interaction --prefer-dist
+RUN composer install --no-interaction --prefer-dist
 
 # =========================
 # INSTALL NODE DEPENDENCIES
@@ -60,7 +60,7 @@ RUN npm run build
 # =========================
 RUN cp env.example .env || true
 
-RUN php artisan key:generate
+RUN chmod +x /app/docker-entrypoint.sh
 
 # =========================
 # EXPOSE PORT
@@ -70,4 +70,4 @@ EXPOSE 8000
 # =========================
 # START SERVER
 # =========================
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+CMD ["/app/docker-entrypoint.sh"]

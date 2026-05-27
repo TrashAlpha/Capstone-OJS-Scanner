@@ -6,6 +6,12 @@
 <div class="page-title">Scan Logs</div>
 <div class="page-sub">Seluruh riwayat hasil scanning keamanan OJS</div>
 
+@if (session('status'))
+<div style="margin:16px 0; background:#3fb95015; border:1px solid #3fb95044; color:#7ee787; padding:10px 12px; border-radius:8px; font-size:12px;">
+  {{ session('status') }}
+</div>
+@endif
+
 {{-- FILTER --}}
 <form method="GET" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
   <input type="text" name="search" value="{{ request('search') }}"
@@ -60,7 +66,7 @@
         <td style="font-family:monospace; font-size:11px; font-weight:600; color:{{ match($risk){ 'critical'=>'#f85149','high'=>'#f0883e','medium'=>'#58a6ff',default=>'#3fb950' } }}">{{ $log['cvss_score'] ?? '-' }}</td>
         <td><span class="badge risk-{{ $risk }}">{{ strtoupper($risk) }}</span></td>
         <td style="color:#8b949e; font-size:11px; white-space:nowrap;">{{ $log['scanned_at'] ?? '-' }}</td>
-        <td><a href="#" class="link-action">Detail</a></td>
+        <td><a href="{{ route('scanner.show', $log['scan_run_id']) }}" class="link-action">Detail</a></td>
       </tr>
       @empty
       <tr>

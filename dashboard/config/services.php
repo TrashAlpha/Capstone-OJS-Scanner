@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+    'risk_engine' => [
+        'url' => env('RISK_ENGINE_URL', 'http://risk-engine:5000'),
+    ],
+
+    'scanner' => [
+        'url' => env('SCANNER_URL', 'http://scanner:5000'),
+    ],
+
+    'telegram' => [
+        'bot_username' => env('TELEGRAM_BOT_USERNAME'),
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+    ],
+
 ];

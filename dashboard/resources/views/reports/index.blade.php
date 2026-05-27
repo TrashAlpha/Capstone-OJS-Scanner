@@ -6,13 +6,37 @@
 <div class="page-title">Reports</div>
 <div class="page-sub">Laporan hasil analisis keamanan OJS</div>
 
-<div style="background:#161b22; border:1px solid #21262d; border-radius:10px; padding:2rem; margin-top:1rem; text-align:center;">
-    <div style="font-size:2rem; margin-bottom:1rem;">📄</div>
-    <div style="font-size:14px; color:#8b949e; margin-bottom:1.5rem;">
-        Belum ada laporan yang tersedia. Jalankan scan terlebih dahulu untuk menghasilkan laporan.
-    </div>
-    <a href="{{ route('scanner.run') }}" style="background:#1f6feb22; border:1px solid #1f6feb44; color:#58a6ff; padding:8px 20px; border-radius:8px; text-decoration:none; font-size:13px;">
-        Run Scan
-    </a>
+<div class="table-wrap" style="margin-top:16px;">
+  <table>
+    <thead>
+      <tr>
+        <th>Target</th>
+        <th>Type</th>
+        <th>Total Findings</th>
+        <th>Max CVSS</th>
+        <th>Severity</th>
+        <th>Scanned At</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @forelse($scanRuns as $scanRun)
+      @php $risk = strtolower($scanRun->summary_severity ?? 'informational'); @endphp
+      <tr>
+        <td class="mono">{{ $scanRun->target_url }}</td>
+        <td><span class="badge {{ $scanRun->scan_type === 'external' ? 'type-ext' : 'type-int' }}">{{ strtoupper($scanRun->scan_type) }}</span></td>
+        <td>{{ $scanRun->summary_total_findings }}</td>
+        <td class="mono">{{ number_format($scanRun->summary_max_score, 1) }}</td>
+        <td><span class="badge risk-{{ $risk }}">{{ strtoupper($risk) }}</span></td>
+        <td>{{ $scanRun->scanned_at?->format('Y-m-d H:i:s') }}</td>
+        <td><a href="{{ route('scanner.show', $scanRun) }}" class="link-action">View</a></td>
+      </tr>
+      @empty
+      <tr>
+        <td colspan="7" style="text-align:center; padding:40px; color:#484f58;">Belum ada laporan. Jalankan scan terlebih dahulu.</td>
+      </tr>
+      @endforelse
+    </tbody>
+  </table>
 </div>
 @endsection

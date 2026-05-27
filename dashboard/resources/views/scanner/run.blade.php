@@ -14,7 +14,19 @@
             Target Configuration
         </h3>
 
-        <form method="POST" action="#" id="scanForm">
+        @if ($errors->any())
+            <div style="margin-bottom:1rem; background:#f8514915; border:1px solid #f8514944; color:#fdaeb7; padding:10px 12px; border-radius:8px; font-size:12px;">
+                {{ $errors->first('scan') ?: $errors->first() }}
+            </div>
+        @endif
+
+        @if (session('status'))
+            <div style="margin-bottom:1rem; background:#3fb95015; border:1px solid #3fb95044; color:#7ee787; padding:10px 12px; border-radius:8px; font-size:12px;">
+                {{ session('status') }}
+            </div>
+        @endif
+
+        <form method="POST" action="{{ route('scanner.execute') }}" id="scanForm">
             @csrf
 
             {{-- URL OJS --}}
@@ -23,6 +35,7 @@
                     OJS URL <span style="color:#f85149;">*</span>
                 </label>
                 <input type="url" name="ojs_url" placeholder="https://journal.example.ac.id"
+                    value="{{ old('ojs_url') }}"
                     required
                     style="width:100%; background:#0d1117; border:1px solid #30363d; color:#e6edf3; padding:8px 12px; border-radius:8px; font-size:13px; outline:none;">
                 <div style="font-size:11px; color:#484f58; margin-top:4px;">URL lengkap platform OJS yang akan di-scan</div>
@@ -41,6 +54,7 @@
                     Username Admin
                 </label>
                 <input type="text" name="admin_username" placeholder="admin"
+                    value="{{ old('admin_username') }}"
                     style="width:100%; background:#0d1117; border:1px solid #30363d; color:#e6edf3; padding:8px 12px; border-radius:8px; font-size:13px; outline:none;">
             </div>
 
@@ -66,13 +80,13 @@
                 </label>
                 <div style="display:flex; gap:8px;">
                     <label style="flex:1; background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:8px 12px; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:12px;">
-                        <input type="radio" name="scan_type" value="external" checked> External Only
+                        <input type="radio" name="scan_type" value="external" {{ old('scan_type', 'external') === 'external' ? 'checked' : '' }}> External Only
                     </label>
                     <label style="flex:1; background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:8px 12px; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:12px;">
-                        <input type="radio" name="scan_type" value="internal"> Internal Only
+                        <input type="radio" name="scan_type" value="internal" {{ old('scan_type') === 'internal' ? 'checked' : '' }}> Internal Only
                     </label>
                     <label style="flex:1; background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:8px 12px; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:12px;">
-                        <input type="radio" name="scan_type" value="full"> Full Scan
+                        <input type="radio" name="scan_type" value="full" {{ old('scan_type') === 'full' ? 'checked' : '' }}> Full Scan
                     </label>
                 </div>
             </div>
