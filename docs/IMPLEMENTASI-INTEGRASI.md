@@ -26,7 +26,7 @@ Perubahan:
 - Endpoint menerima:
   - `target_url`
   - `scan_type`
-  - `admin_username` dan `admin_password` (sudah diteruskan, walau implementasi scan internal/full masih terbatas)
+  - `admin_username` dan `admin_password` (dapat dikirim oleh caller, tetapi pada implementasi saat ini belum diteruskan ke orchestrator dan belum digunakan untuk scan internal/full)
 - Endpoint menjalankan `ScanOrchestrator`
 - Endpoint mengembalikan hasil mentah scan
 
