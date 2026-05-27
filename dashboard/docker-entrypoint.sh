@@ -28,8 +28,12 @@ upsert_env "TELEGRAM_BOT_USERNAME" "$TELEGRAM_BOT_USERNAME"
 upsert_env "TELEGRAM_BOT_TOKEN" "$TELEGRAM_BOT_TOKEN"
 upsert_env "SCANNER_URL" "$SCANNER_URL"
 upsert_env "RISK_ENGINE_URL" "$RISK_ENGINE_URL"
+upsert_env "APP_KEY" "$APP_KEY"
 
-php artisan key:generate --force
+if ! grep -Eq '^APP_KEY=.+$' .env; then
+  php artisan key:generate --force
+fi
+
 php artisan optimize:clear || true
 php artisan config:clear || true
 php artisan cache:clear || true
