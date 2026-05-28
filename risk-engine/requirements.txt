@@ -1,3 +1,4 @@
-flask
-requests
-cvss
+flask==3.1.1
+requests==2.32.3
+cvss==3.2
+mysql-connector-python==9.3.0

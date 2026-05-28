@@ -1,0 +1,10 @@
+{
+  "ignore": [
+    "risk-engine/**",
+    "scanner/**",
+    "telegram-bot/**"
+  ],
+  "pythonPath": "C:/Users/LENOVO/AppData/Local/Programs/Python/Python312/python.exe",
+  "reportMissingModuleSource": "none",
+  "reportMissingImports": "none"
+}

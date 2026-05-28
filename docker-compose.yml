@@ -102,6 +102,8 @@ services:
       # Nuclei Configuration
       NUCLEI_TIMEOUT: 300
       NUCLEI_RATE_LIMIT: 50
+      # Risk Engine
+      RISK_ENGINE_URL: http://risk-engine:5000
     networks:
       - appnet
 
@@ -116,12 +118,16 @@ services:
       - "5001:5000"
     depends_on:
       - scanner
+      - app-db
     environment:
       SCANNER_URL: http://scanner:5000
       DATABASE_HOST: app-db
       DATABASE_NAME: appdb
       DATABASE_USER: appuser
       DATABASE_PASSWORD: app123
+      # Telegram Notification
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-8093324098:AAEuipxc8bNxTvN3pXctSmo6HRoXD-iNkv0}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
     networks:
       - appnet
 
