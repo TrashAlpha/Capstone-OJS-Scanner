@@ -1,0 +1,134 @@
+id: ojs-public-files-exposure
+
+info:
+  name: OJS Sensitive Files & Directory Exposure
+  author: capstone-team
+  severity: medium
+  description: |
+    Deteksi file dan direktori sensitif yang terekspos pada instalasi OJS:
+    - File konfigurasi (config.inc.php)
+    - Direktori .git
+    - phpinfo() pages
+    - Directory listing pada /public/
+    - Endpoint debug/installer
+    - File backup
+  tags: ojs,exposure,misconfiguration,files
+
+http:
+  # ── Cek 1: config.inc.php exposed ───────────────────────────
+  - method: GET
+    path:
+      - "{{BaseURL}}/config.inc.php"
+      - "{{BaseURL}}/config.inc.php.bak"
+      - "{{BaseURL}}/config.inc.php~"
+      - "{{BaseURL}}/config.inc.php.old"
+    stop-at-first-match: true
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        part: body
+        words:
+          - "database"
+          - "password"
+          - "driver"
+          - "ojs"
+        condition: or
+
+  # ── Cek 2: .git directory exposure ──────────────────────────
+  - method: GET
+    path:
+      - "{{BaseURL}}/.git/config"
+      - "{{BaseURL}}/.git/HEAD"
+    stop-at-first-match: true
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        part: body
+        words:
+          - "[core]"
+          - "ref: refs/"
+        condition: or
+
+  # ── Cek 3: phpinfo exposure ─────────────────────────────────
+  - method: GET
+    path:
+      - "{{BaseURL}}/phpinfo.php"
+      - "{{BaseURL}}/info.php"
+      - "{{BaseURL}}/test.php"
+    stop-at-first-match: true
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        part: body
+        words:
+          - "PHP Version"
+          - "phpinfo()"
+        condition: or
+
+  # ── Cek 4: Directory listing pada public/ ────────────────────
+  - method: GET
+    path:
+      - "{{BaseURL}}/public/"
+      - "{{BaseURL}}/files/"
+      - "{{BaseURL}}/cache/"
+    stop-at-first-match: true
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        part: body
+        words:
+          - "Index of"
+          - "Directory listing"
+          - "Parent Directory"
+        condition: or
+
+  # ── Cek 5: OJS installer endpoint masih aktif ────────────────
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/install"
+      - "{{BaseURL}}/index.php/index/install/install"
+    stop-at-first-match: true
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        part: body
+        words:
+          - "OJS Installation"
+          - "Install Open Journal Systems"
+          - "installer"
+        condition: or
+
+  # ── Cek 6: Robots.txt information leakage ────────────────────
+  - method: GET
+    path:
+      - "{{BaseURL}}/robots.txt"
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        part: body
+        words:
+          - "Disallow"
+    extractors:
+      - type: regex
+        part: body
+        name: disallowed_paths
+        regex:
+          - "Disallow: (.+)"

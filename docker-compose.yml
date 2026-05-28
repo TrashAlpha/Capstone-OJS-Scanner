@@ -84,6 +84,8 @@ services:
     build: ./scanner
     container_name: scanner-service
     restart: always
+    ports:
+      - "5000:5000"
     depends_on:
       - ojs
       - app-db
@@ -93,6 +95,13 @@ services:
       DATABASE_NAME: appdb
       DATABASE_USER: appuser
       DATABASE_PASSWORD: app123
+      # LLM Configuration (Gemini 3.5 Flash)
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_PROVIDER: gemini
+      LLM_MODEL: gemini-3.5-flash
+      # Nuclei Configuration
+      NUCLEI_TIMEOUT: 300
+      NUCLEI_RATE_LIMIT: 50
     networks:
       - appnet
 

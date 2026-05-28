@@ -1,0 +1,63 @@
+id: ojs-xxe-cve-2024-56525
+
+info:
+  name: OJS XXE via User XML Plugin - CVE-2024-56525
+  author: capstone-team
+  severity: critical
+  description: |
+    CVE-2024-56525 - Kerentanan XML External Entity (XXE) pada Open Journal Systems,
+    Open Monograph Press (OMP), dan Open Preprint Systems (OPS).
+    Penyerang dengan role Journal Editor dapat mengeksploitasi User XML Plugin handler
+    untuk membuat user dengan role Super Admin dan menyisipkan backdoor plugin.
+    Affected: OJS < 3.3.0.21 dan 3.4.x < 3.4.0.8
+  reference:
+    - https://nvd.nist.gov/vuln/detail/CVE-2024-56525
+    - https://github.com/pkp/pkp-lib/issues/10281
+  classification:
+    cve-id: CVE-2024-56525
+    cwe-id: CWE-611
+    cvss-score: 9.8
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H
+  tags: ojs,xxe,cve,cve2024,critical
+
+http:
+  # ── Cek 1: Deteksi keberadaan endpoint import/export plugin ──
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/management/importexport/plugin/UserImportExportPlugin"
+      - "{{BaseURL}}/index.php/index/management/importexport"
+    stop-at-first-match: true
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+          - 302
+      - type: word
+        part: body
+        words:
+          - "UserImportExportPlugin"
+          - "importexport"
+          - "Import/Export"
+        condition: or
+
+  # ── Cek 2: Deteksi versi rentan via OAI ─────────────────────
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/oai?verb=Identify"
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: regex
+        part: body
+        regex:
+          - "Open Journal Systems[/ ](3\\.[0-2]\\.|3\\.3\\.0\\.[0-9]$|3\\.3\\.0\\.1[0-9]$|3\\.3\\.0\\.20$|3\\.4\\.0\\.[0-7]$)"
+    extractors:
+      - type: regex
+        part: body
+        group: 1
+        name: vulnerable_version
+        regex:
+          - "Open Journal Systems[/ ]([0-9]+\\.[0-9]+\\.[0-9]+[.0-9]*)"
