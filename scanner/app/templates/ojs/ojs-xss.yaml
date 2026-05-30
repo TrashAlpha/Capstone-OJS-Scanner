@@ -1,0 +1,101 @@
+id: ojs-xss-multiple-cve
+
+info:
+  name: OJS Multiple Stored/Reflected XSS Vulnerabilities
+  author: capstone-team
+  severity: medium
+  description: |
+    Deteksi beberapa kerentanan Cross-Site Scripting (XSS) pada OJS:
+    - CVE-2024-24511: Stored XSS via Input Title (OJS 3.4)
+    - CVE-2024-24512: Stored XSS via Input Subtitle (OJS 3.4)
+    - CVE-2024-25434: Stored XSS via Publicname parameter (OJS 3.3)
+    - CVE-2023-5894: Stored XSS (OJS < 3.3.0-16)
+    - CVE-2022-24181: Reflected XSS via X-Forwarded-Host header
+  reference:
+    - https://nvd.nist.gov/vuln/detail/CVE-2024-24511
+    - https://nvd.nist.gov/vuln/detail/CVE-2024-24512
+    - https://nvd.nist.gov/vuln/detail/CVE-2024-25434
+    - https://nvd.nist.gov/vuln/detail/CVE-2023-5894
+    - https://nvd.nist.gov/vuln/detail/CVE-2022-24181
+  classification:
+    cve-id: CVE-2024-24511
+    cwe-id: CWE-79
+    cvss-score: 6.1
+  tags: ojs,xss,cve,cve2024,cve2023,cve2022,stored-xss,reflected-xss
+
+http:
+  # ── Cek 1: Reflected XSS via X-Forwarded-Host (CVE-2022-24181) ──
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+    headers:
+      X-Forwarded-Host: "xss-detect-test.example.com"
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        part: body
+        words:
+          - "xss-detect-test.example.com"
+
+  # ── Cek 2: Deteksi halaman submission (surface untuk Stored XSS) ──
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/submissions"
+      - "{{BaseURL}}/index.php/index/submission/wizard"
+    stop-at-first-match: true
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+          - 302
+      - type: word
+        part: body
+        words:
+          - "submission"
+          - "title"
+        condition: and
+
+  # ── Cek 3: Deteksi versi rentan (3.3.x atau 3.4.x < patched) ──
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/oai?verb=Identify"
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: regex
+        part: body
+        regex:
+          - "Open Journal Systems[/ ](3\\.3\\.|3\\.4\\.0\\.[0-4])"
+    extractors:
+      - type: regex
+        part: body
+        group: 1
+        name: vulnerable_version
+        regex:
+          - "Open Journal Systems[/ ]([0-9]+\\.[0-9]+\\.[0-9]+[.0-9]*)"
+
+  # ── Cek 4: Cek profile/user endpoint (CVE-2024-25434 Publicname) ──
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/user/profile"
+      - "{{BaseURL}}/index.php/index/user/register"
+    stop-at-first-match: true
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+          - 302
+      - type: word
+        part: body
+        words:
+          - "publicname"
+          - "preferredPublicName"
+          - "givenName"
+        condition: or

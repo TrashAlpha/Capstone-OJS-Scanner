@@ -1,0 +1,65 @@
+id: ojs-version-detect
+
+info:
+  name: OJS Version Detection
+  author: capstone-team
+  severity: info
+  description: |
+    Mendeteksi versi Open Journal Systems (OJS) melalui beberapa metode:
+    OAI endpoint, meta generator tag, dan HTML fingerprinting.
+  tags: ojs,version,fingerprint
+
+http:
+  # ── Strategi 1: OAI Endpoint (paling reliable) ──────────────
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/oai?verb=Identify"
+    matchers:
+      - type: regex
+        part: body
+        regex:
+          - "Open Journal Systems[/ ]([0-9]+\\.[0-9]+\\.[0-9]+[.0-9]*)"
+    extractors:
+      - type: regex
+        part: body
+        group: 1
+        name: ojs_version
+        regex:
+          - "Open Journal Systems[/ ]([0-9]+\\.[0-9]+\\.[0-9]+[.0-9]*)"
+
+  # ── Strategi 2: Meta Generator Tag ──────────────────────────
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+    matchers:
+      - type: regex
+        part: body
+        regex:
+          - '<meta\\s+name="generator"\\s+content="Open Journal Systems ([0-9]+\\.[0-9]+\\.[0-9]+[.0-9]*)"'
+    extractors:
+      - type: regex
+        part: body
+        group: 1
+        name: ojs_version
+        regex:
+          - '<meta\\s+name="generator"\\s+content="Open Journal Systems ([0-9]+\\.[0-9]+\\.[0-9]+[.0-9]*)"'
+
+  # ── Strategi 3: HTML body regex fallback ─────────────────────
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "Open Journal Systems"
+          - "pkp"
+        condition: or
+    extractors:
+      - type: regex
+        part: body
+        group: 1
+        name: ojs_version
+        regex:
+          - "ojs/([0-9]+\\.[0-9]+\\.[0-9]+[.0-9]*)"
+          - "pkp[_-]version[\"\\s:=]+([0-9]+\\.[0-9]+\\.[0-9]+[.0-9]*)"

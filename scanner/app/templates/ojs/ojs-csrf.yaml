@@ -1,0 +1,89 @@
+id: ojs-csrf-multiple-cve
+
+info:
+  name: OJS CSRF Vulnerabilities - CVE-2023-5626 & CVE-2023-6671
+  author: capstone-team
+  severity: high
+  description: |
+    Deteksi kerentanan Cross-Site Request Forgery (CSRF) pada OJS:
+    - CVE-2023-5626: CSRF pada OJS < 3.3.0-16 (CVSS 8.8)
+    - CVE-2023-6671: CSRF pada OJS 3.3.0.13 (CVSS 6.3)
+    Template ini mengecek keberadaan CSRF token pada form kritis
+    dan cookie SameSite attribute.
+  reference:
+    - https://nvd.nist.gov/vuln/detail/CVE-2023-5626
+    - https://nvd.nist.gov/vuln/detail/CVE-2023-6671
+  classification:
+    cve-id: CVE-2023-5626
+    cwe-id: CWE-352
+    cvss-score: 8.8
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H
+  tags: ojs,csrf,cve,cve2023,high
+
+http:
+  # ── Cek 1: Login form tanpa CSRF token ──────────────────────
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/login"
+      - "{{BaseURL}}/index.php/index/login/signIn"
+    stop-at-first-match: true
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        part: body
+        words:
+          - "<form"
+          - "login"
+        condition: and
+      - type: word
+        part: body
+        words:
+          - "csrfToken"
+          - "csrf_token"
+          - "_token"
+        negative: true
+        condition: and
+
+  # ── Cek 2: Cookie tanpa SameSite attribute ───────────────────
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/login"
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+          - 302
+      - type: word
+        part: header
+        words:
+          - "Set-Cookie"
+      - type: word
+        part: header
+        words:
+          - "SameSite"
+        negative: true
+
+  # ── Cek 3: Deteksi versi rentan ─────────────────────────────
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/oai?verb=Identify"
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: regex
+        part: body
+        regex:
+          - "Open Journal Systems[/ ](3\\.3\\.0\\.([0-9]|1[0-5])$|3\\.[0-2]\\.)"
+    extractors:
+      - type: regex
+        part: body
+        group: 1
+        name: vulnerable_version
+        regex:
+          - "Open Journal Systems[/ ]([0-9]+\\.[0-9]+\\.[0-9]+[.0-9]*)"
