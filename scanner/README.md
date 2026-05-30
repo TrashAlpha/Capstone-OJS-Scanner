@@ -105,32 +105,58 @@ Semua findings → LLM Analysis (Gemini) → Risk Engine → Dashboard
 
 ## 🚀 Cara Menjalankan Scan
 
+> **PowerShell users:** gunakan `Invoke-RestMethod` (bukan `curl`, karena di PowerShell `curl` adalah alias `Invoke-WebRequest`).
+
 ### 1. External Scan (Tanpa Login)
 
 External scan menjalankan Nuclei dengan 11 template OJS + Python scanner modules
 tanpa memerlukan kredensial ke website target.
 
-```bash
+```powershell
 # Full scan (Nuclei + Python modules + LLM analysis)
-curl -X POST http://localhost:5000/scan \
-  -H "Content-Type: application/json" \
-  -d '{
-    "target_url": "http://target-ojs.com",
-    "scan_profile": "general"
-  }'
+Invoke-RestMethod -Method POST -Uri "http://localhost:5000/scan" `
+  -ContentType "application/json" `
+  -Body '{"target_url": "http://ojs", "scan_profile": "general"}'
 
 # Nuclei only (cepat, tanpa LLM)
-curl -X POST http://localhost:5000/scan/nuclei \
-  -H "Content-Type: application/json" \
-  -d '{
-    "target_url": "http://target-ojs.com",
-    "scan_profile": "ojs_only"
-  }'
+Invoke-RestMethod -Method POST -Uri "http://localhost:5000/scan/nuclei" `
+  -ContentType "application/json" `
+  -Body '{"target_url": "http://ojs", "scan_profile": "ojs_only"}'
 ```
 
 **Parameter `scan_profile`:**
 - `general` (default) — template OJS + automatic scan teknologi yang terdeteksi
 - `ojs_only` — hanya template OJS custom (lebih cepat)
+
+Response (200 OK — scan selesai synchronous):
+```json
+{
+  "scan_id": 1,
+  "target_url": "http://localhost:8080",
+  "status": "completed",
+  "findings_count": 5,
+  "findings": [ ... ]
+}
+```
+
+**Langkah 2 — Lihat hasil external scan:**
+
+```powershell
+# Lihat semua riwayat scan (default 20 terakhir)
+Invoke-RestMethod -Uri "http://localhost:5000/scans"
+
+# Lihat riwayat lebih banyak
+Invoke-RestMethod -Uri "http://localhost:5000/scans?limit=50"
+
+# Lihat detail hasil scan berdasarkan ID (ganti 1 dengan scan_id dari response)
+Invoke-RestMethod -Uri "http://localhost:5000/scans/1"
+```
+
+Output `Invoke-RestMethod` adalah PowerShell object. Untuk tampilan JSON yang rapi:
+
+```powershell
+Invoke-RestMethod -Uri "http://localhost:5000/scans/1" | ConvertTo-Json -Depth 10
+```
 
 ### 2. Internal Scan (Dengan Kredensial Admin)
 
@@ -140,14 +166,10 @@ file upload bypass, audit konfigurasi, dll).
 
 **Langkah 1 — Verifikasi kredensial dulu (opsional tapi disarankan):**
 
-```bash
-curl -X POST http://localhost:5000/scan/auth-test \
-  -H "Content-Type: application/json" \
-  -d '{
-    "target_url": "http://target-ojs.com",
-    "username": "admin",
-    "password": "secret"
-  }'
+```powershell
+Invoke-RestMethod -Method POST -Uri "http://localhost:5000/scan/auth-test" `
+  -ContentType "application/json" `
+  -Body '{"target_url": "http://ojs", "username": "admin", "password": "secret"}'
 ```
 
 Response:
@@ -161,14 +183,10 @@ Response:
 
 **Langkah 2 — Jalankan internal scan:**
 
-```bash
-curl -X POST http://localhost:5000/scan/internal \
-  -H "Content-Type: application/json" \
-  -d '{
-    "target_url": "http://target-ojs.com",
-    "username": "admin",
-    "password": "secret"
-  }'
+```powershell
+Invoke-RestMethod -Method POST -Uri "http://localhost:5000/scan/internal" `
+  -ContentType "application/json" `
+  -Body '{"target_url": "http://ojs", "username": "admin", "password": "secret"}'
 ```
 
 Response (202 Accepted — scan berjalan di background):
@@ -176,7 +194,7 @@ Response (202 Accepted — scan berjalan di background):
 {
   "message": "Internal scan started in background",
   "scan_id": 42,
-  "target_url": "http://target-ojs.com",
+  "target_url": "http://localhost:8080",
   "authenticated_role": "admin",
   "status": "running"
 }
@@ -184,22 +202,22 @@ Response (202 Accepted — scan berjalan di background):
 
 **Langkah 3 — Cek hasil scan:**
 
-```bash
-curl http://localhost:5000/scans/42
+```powershell
+Invoke-RestMethod -Uri "http://localhost:5000/scans/42" | ConvertTo-Json -Depth 10
 ```
 
 ### 3. Cek Status dan Hasil Scan
 
-```bash
+```powershell
 # Riwayat scan terbaru (default 20, max 100)
-curl http://localhost:5000/scans
-curl http://localhost:5000/scans?limit=50
+Invoke-RestMethod -Uri "http://localhost:5000/scans"
+Invoke-RestMethod -Uri "http://localhost:5000/scans?limit=50"
 
-# Detail scan tertentu
-curl http://localhost:5000/scans/42
+# Detail scan tertentu (tampilan JSON rapi)
+Invoke-RestMethod -Uri "http://localhost:5000/scans/42" | ConvertTo-Json -Depth 10
 
 # List template yang tersedia
-curl http://localhost:5000/templates
+Invoke-RestMethod -Uri "http://localhost:5000/templates"
 ```
 
 ---
