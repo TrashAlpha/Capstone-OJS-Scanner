@@ -1,0 +1,103 @@
+id: ojs-open-redirect
+
+info:
+  name: OJS Open Redirect Detection
+  author: OJS-Security-Scanner
+  severity: medium
+  description: |
+    Deteksi Open Redirect pada parameter redirect OJS seperti 'source',
+    'returnUrl', dan parameter serupa di halaman login dan logout.
+    Open redirect dapat digunakan untuk serangan phishing — korban
+    mengklik URL OJS yang legitimate tapi di-redirect ke situs jahat.
+  tags:
+    - ojs
+    - redirect
+    - open-redirect
+    - phishing
+  classification:
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N
+    cvss-score: 6.1
+    cwe-id: CWE-601
+
+http:
+  # Test 1: Open redirect via parameter 'source' di login
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/login?source=https://evil.example.com"
+      - "{{BaseURL}}/index.php/index/login?source=//evil.example.com"
+      - "{{BaseURL}}/index.php/index/login?source=/\\evil.example.com"
+
+    redirects: false
+    max-redirects: 0
+
+    matchers-condition: and
+    matchers:
+      - type: regex
+        part: header
+        regex:
+          - "Location: https?://evil\\.example\\.com"
+          - "Location: //evil\\.example\\.com"
+        condition: or
+
+      - type: status
+        status:
+          - 301
+          - 302
+          - 303
+          - 307
+          - 308
+
+    extractors:
+      - type: kval
+        part: header
+        kval:
+          - Location
+
+  # Test 2: Open redirect via parameter 'returnUrl'
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/login?returnUrl=https://evil.example.com"
+      - "{{BaseURL}}/index.php/index/login?returnUrl=//evil.example.com"
+
+    redirects: false
+    max-redirects: 0
+
+    matchers-condition: and
+    matchers:
+      - type: regex
+        part: header
+        regex:
+          - "Location: https?://evil\\.example\\.com"
+          - "Location: //evil\\.example\\.com"
+        condition: or
+
+      - type: status
+        status:
+          - 301
+          - 302
+          - 303
+          - 307
+          - 308
+
+  # Test 3: Open redirect via logout endpoint
+  - method: GET
+    path:
+      - "{{BaseURL}}/index.php/index/login/signOut?source=https://evil.example.com"
+      - "{{BaseURL}}/index.php/index/login/signOut?returnUrl=https://evil.example.com"
+
+    redirects: false
+    max-redirects: 0
+
+    matchers-condition: and
+    matchers:
+      - type: regex
+        part: header
+        regex:
+          - "Location: https?://evil\\.example\\.com"
+        condition: or
+
+      - type: status
+        status:
+          - 301
+          - 302
+          - 303
