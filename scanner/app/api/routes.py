@@ -3,12 +3,17 @@ app/api/routes.py
 Flask Blueprint dengan REST API endpoints untuk scanner service.
 """
 
+import os
 import time
+import requests as http_requests
 from flask import Blueprint, jsonify, request
 from app.services.nuclei_service import NucleiService
 from app.services.llm_service import LLMService
 from app.services.report_service import ReportService
+from app.utils.parser import findings_to_risk_engine_format
 from app.config import logger
+
+RISK_ENGINE_URL = os.getenv("RISK_ENGINE_URL", "http://risk-engine:5000")
 
 # Lazy import database (mungkin belum ready saat startup)
 try:
@@ -105,6 +110,14 @@ def scan_full():
                 logger.warning(f"Failed to log scan completion: {e}")
 
         report["scan_id"] = scan_id
+
+        # ── Step 4: Forward ke Risk Engine ─────────────────────
+        risk_response = _forward_to_risk_engine(
+            target_url, scan_id, nuclei_results.get("findings", [])
+        )
+        if risk_response:
+            report["risk_engine"] = risk_response
+
         return jsonify(report)
 
     except Exception as e:
@@ -169,6 +182,14 @@ def scan_nuclei_only():
                 pass
 
         report["scan_id"] = scan_id
+
+        # ── Forward ke Risk Engine ─────────────────────────────
+        risk_response = _forward_to_risk_engine(
+            target_url, scan_id, nuclei_results.get("findings", [])
+        )
+        if risk_response:
+            report["risk_engine"] = risk_response
+
         return jsonify(report)
 
     except Exception as e:
@@ -244,3 +265,56 @@ def scan_detail(scan_id):
         return jsonify(log)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# ═══════════════════════════════════════════════════════════════
+# Helper: Forward findings ke Risk Engine
+# ═══════════════════════════════════════════════════════════════
+def _forward_to_risk_engine(target_url, scan_id, findings):
+    """
+    Kirim findings ke Risk Engine untuk scoring & klasifikasi.
+    Dipanggil otomatis setelah setiap scan selesai.
+
+    Returns:
+        dict response dari Risk Engine, atau None jika gagal
+    """
+    if not findings:
+        logger.info("No findings to forward to Risk Engine")
+        return None
+
+    # Format findings sesuai yang diharapkan Risk Engine
+    risk_findings = findings_to_risk_engine_format(findings)
+
+    payload = {
+        "target_url": target_url,
+        "scan_id": scan_id,
+        "findings": risk_findings,
+    }
+
+    try:
+        url = f"{RISK_ENGINE_URL}/analyze"
+        logger.info(f"Forwarding {len(risk_findings)} findings to Risk Engine: {url}")
+
+        response = http_requests.post(
+            url,
+            json=payload,
+            timeout=30,
+        )
+
+        if response.status_code == 200:
+            result = response.json()
+            logger.info(
+                f"Risk Engine response: severity={result.get('summary', {}).get('overall_severity', 'N/A')}, "
+                f"telegram_notified={result.get('telegram_notified', False)}"
+            )
+            return result
+        else:
+            logger.error(f"Risk Engine error: {response.status_code} - {response.text}")
+            return None
+
+    except http_requests.exceptions.ConnectionError:
+        logger.warning("Risk Engine not reachable, skipping forward")
+        return None
+    except Exception as e:
+        logger.error(f"Failed to forward to Risk Engine: {e}")
+        return None
