@@ -54,6 +54,13 @@ def count_by_severity(findings: list[dict]) -> dict:
     return counts
 
 
+def _list_to_str(value) -> str:
+    """Nuclei v3 returns cve-id/cwe-id as list; normalize to comma-separated string."""
+    if isinstance(value, list):
+        return ", ".join(str(v) for v in value if v)
+    return str(value) if value else ""
+
+
 def normalize_finding(nuclei_finding: dict) -> dict:
     """
     Normalize satu finding dari format Nuclei ke format internal.
@@ -78,8 +85,8 @@ def normalize_finding(nuclei_finding: dict) -> dict:
         "extracted_results": nuclei_finding.get("extracted-results", []),
         "curl_command": nuclei_finding.get("curl-command", ""),
         "type": nuclei_finding.get("type", "http"),
-        "cve_id": classification.get("cve-id", ""),
-        "cwe_id": classification.get("cwe-id", ""),
+        "cve_id": _list_to_str(classification.get("cve-id", "")),
+        "cwe_id": _list_to_str(classification.get("cwe-id", "")),
         "cvss_score": classification.get("cvss-score", 0),
         "cvss_metrics": classification.get("cvss-metrics", ""),
         "tags": info.get("tags", []),

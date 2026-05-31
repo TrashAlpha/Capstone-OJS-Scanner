@@ -95,7 +95,7 @@ class NucleiService:
             "-rate-limit", str(self.rate_limit),
             "-timeout", "10",                # Per-request timeout
             "-retries", "1",
-            "-no-update-check",              # Skip update check
+            "-duc",                          # Skip update check
             "-stats",                        # Enable progress logging
             "-si", "5",                      # Log progress every 5 seconds
         ]
@@ -188,6 +188,12 @@ class NucleiService:
 
         return paths
 
+    def _normalize_list_field(self, value) -> str:
+        """Nuclei v3 returns cve-id/cwe-id as list; normalize to comma-separated string."""
+        if isinstance(value, list):
+            return ", ".join(str(v) for v in value if v)
+        return str(value) if value else ""
+
     def _parse_jsonl_output(self, raw_output: str) -> list[dict]:
         """Parse Nuclei JSONL output menjadi list of finding dicts."""
         findings = []
@@ -225,8 +231,8 @@ class NucleiService:
             "extracted_results": raw.get("extracted-results", []),
             "curl_command": raw.get("curl-command", ""),
             "type": raw.get("type", "http"),
-            "cve_id": classification.get("cve-id", ""),
-            "cwe_id": classification.get("cwe-id", ""),
+            "cve_id": self._normalize_list_field(classification.get("cve-id", "")),
+            "cwe_id": self._normalize_list_field(classification.get("cwe-id", "")),
             "cvss_score": classification.get("cvss-score", 0),
             "cvss_metrics": classification.get("cvss-metrics", ""),
             "tags": info.get("tags", []),
