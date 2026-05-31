@@ -21,6 +21,7 @@ info:
     cve-id: CVE-2024-24511
     cwe-id: CWE-79
     cvss-score: 6.1
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N
   tags: ojs,xss,cve,cve2024,cve2023,cve2022,stored-xss,reflected-xss
 
 http:

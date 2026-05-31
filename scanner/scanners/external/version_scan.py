@@ -14,6 +14,32 @@ import requests
 from bs4 import BeautifulSoup
 from scanners.base import ScannerModule, Finding
 
+# ── Versi OJS dengan kerentanan yang diketahui ────────────────
+# Format: dot-normalized (dash diganti dot). "3.3.0" cocok dengan semua 3.3.0.x via prefix.
+VULNERABLE_VERSIONS = {
+    "3.4.0.0",
+    "3.3.0",
+    "3.2.1.3", "3.2.1.2", "3.2.1.1", "3.2.1",
+    "3.2.0.3", "3.2.0.2", "3.2.0.1", "3.2.0",
+    "3.1.2.4", "3.1.2.3", "3.1.2.2", "3.1.2.1", "3.1.2",
+    "3.1.1.4", "3.1.1.3", "3.1.1.2", "3.1.1.1", "3.1.1",
+    "3.1.0.1", "3.1.0",
+    "3.0.2", "3.0.1", "3.0.0",
+}
+
+
+def is_vulnerable_version(version: str) -> bool:
+    """Cek apakah versi OJS termasuk versi dengan kerentanan yang diketahui."""
+    normalized = version.replace("-", ".")
+    # Semua versi < 3.0 (OJS 1.x dan 2.x) sudah deprecated
+    if re.match(r"^[12]\.", normalized):
+        return True
+    for vuln_ver in VULNERABLE_VERSIONS:
+        if normalized == vuln_ver or normalized.startswith(vuln_ver + "."):
+            return True
+    return False
+
+
 # ── CVE Database (tambahkan terus sesuai update) ──────────────
 CVE_MAP = {
     # Format: "versi_prefix": [{"id": "CVE-...", "severity": "...", "desc": "..."}]
@@ -140,6 +166,26 @@ class VersionScanner(ScannerModule):
                 module=self.name,
                 url=self.target_url,
             ))
+
+            # ── Cek versi berbahaya ────────────────────────────
+            if is_vulnerable_version(version):
+                findings.append(Finding(
+                    title=f"OJS Vulnerable Version In Use: {version}",
+                    severity="high",
+                    description=(
+                        f"OJS versi {version} diketahui memiliki kerentanan keamanan yang belum di-patch. "
+                        "Versi ini tidak lagi menerima security update dari PKP."
+                    ),
+                    evidence=f"Detected version: {version}",
+                    module=self.name,
+                    cve="Multiple",
+                    remediation="Update OJS ke versi terbaru di https://pkp.sfu.ca/ojs/ojs_download/",
+                    url=self.target_url,
+                    extra={
+                        "cwe_id": "CWE-1104",
+                        "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L/A:L",
+                    },
+                ))
 
             # ── CVE Mapping ────────────────────────────────────
             cves = get_cves_for_version(version)
