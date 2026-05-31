@@ -7,6 +7,10 @@ info:
   description: |
     Mendeteksi versi Open Journal Systems (OJS) melalui beberapa metode:
     OAI endpoint, meta generator tag, dan HTML fingerprinting.
+  classification:
+    cwe-id: CWE-200
+    cvss-score: 0.0
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N
   tags: ojs,version,fingerprint
 
 http:

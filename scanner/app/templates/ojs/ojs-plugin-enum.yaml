@@ -1,0 +1,108 @@
+id: ojs-plugin-enumeration
+
+info:
+  name: OJS Plugin Enumeration and Version Detection
+  author: OJS-Security-Scanner
+  severity: info
+  description: |
+    Enumerasi plugin OJS yang terinstall dan deteksi versinya.
+    Plugin yang sudah diketahui memiliki kerentanan akan ditandai.
+    Informasi ini berguna untuk menentukan attack surface OJS.
+  tags:
+    - ojs
+    - plugin
+    - enumeration
+    - fingerprint
+  classification:
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N
+    cvss-score: 5.3
+    cwe-id: CWE-200
+
+http:
+  # Test 1: Deteksi keberadaan direktori plugin
+  - method: GET
+    path:
+      - "{{BaseURL}}/plugins/generic/"
+      - "{{BaseURL}}/plugins/importexport/"
+      - "{{BaseURL}}/plugins/paymethod/"
+      - "{{BaseURL}}/plugins/themes/"
+      - "{{BaseURL}}/plugins/blocks/"
+      - "{{BaseURL}}/plugins/reports/"
+      - "{{BaseURL}}/plugins/auth/"
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+          - 403
+
+      - type: word
+        words:
+          - "plugins"
+          - "Index of"
+          - "403 Forbidden"
+        condition: or
+
+    extractors:
+      - type: regex
+        name: plugin_dir_accessible
+        regex:
+          - "(?i)(Index of /plugins|403 Forbidden)"
+
+  # Test 2: Cek versi plugin via version.xml (bisa expose versi yang rentan)
+  - method: GET
+    path:
+      - "{{BaseURL}}/plugins/generic/thesis/version.xml"
+      - "{{BaseURL}}/plugins/generic/driver/version.xml"
+      - "{{BaseURL}}/plugins/generic/staticPages/version.xml"
+      - "{{BaseURL}}/plugins/generic/customLocale/version.xml"
+      - "{{BaseURL}}/plugins/importexport/crossref/version.xml"
+      - "{{BaseURL}}/plugins/importexport/datacite/version.xml"
+      - "{{BaseURL}}/plugins/importexport/native/version.xml"
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+
+      - type: word
+        words:
+          - "<version>"
+          - "<name>"
+          - "<application>"
+        condition: or
+
+    extractors:
+      - type: regex
+        name: plugin_version
+        regex:
+          - "<release>([^<]+)</release>"
+          - "<name>([^<]+)</name>"
+          - "<version>[^<]*<release>([^<]+)</release>"
+
+  # Test 3: Deteksi plugin Thesis (known RCE vector di versi lama)
+  - method: GET
+    path:
+      - "{{BaseURL}}/plugins/generic/thesis/"
+      - "{{BaseURL}}/plugins/generic/thesis/ThesisPlugin.inc.php"
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+
+      - type: word
+        words:
+          - "ThesisPlugin"
+          - "thesis"
+          - "class Thesis"
+        condition: or
+
+    extractors:
+      - type: regex
+        name: thesis_plugin_exposed
+        regex:
+          - "(?i)thesis[^\"<]+"

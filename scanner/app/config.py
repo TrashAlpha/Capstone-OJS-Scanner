@@ -35,6 +35,11 @@ DATABASE_NAME = os.getenv("DATABASE_NAME", "appdb")
 DATABASE_USER = os.getenv("DATABASE_USER", "appuser")
 DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD", "app123")
 
+# ── Internal Scanner ───────────────────────────────────────────
+OJS_ADMIN_USERNAME = os.getenv("OJS_ADMIN_USERNAME", "")
+OJS_ADMIN_PASSWORD = os.getenv("OJS_ADMIN_PASSWORD", "")
+INTERNAL_SCAN_TIMEOUT = int(os.getenv("INTERNAL_SCAN_TIMEOUT", "600"))
+
 # ── Logging ────────────────────────────────────────────────────
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 

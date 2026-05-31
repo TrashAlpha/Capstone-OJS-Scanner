@@ -47,7 +47,9 @@ def get_cwe_info(cwe_id):
         "CWE-538": "Insertion of Sensitive Information into Externally-Accessible File",
         "CWE-548": "Exposure of Information Through Directory Listing",
     }
-    return cwe_map.get(cwe_id, "General Security Weakness")
+    if isinstance(cwe_id, list):
+        cwe_id = cwe_id[0] if cwe_id else "N/A"
+    return cwe_map.get(str(cwe_id), "General Security Weakness")
 
 
 def get_risk_level(score):

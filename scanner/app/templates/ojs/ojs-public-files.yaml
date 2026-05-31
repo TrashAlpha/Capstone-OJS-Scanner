@@ -12,6 +12,10 @@ info:
     - Directory listing pada /public/
     - Endpoint debug/installer
     - File backup
+  classification:
+    cwe-id: CWE-538
+    cvss-score: 5.3
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N
   tags: ojs,exposure,misconfiguration,files
 
 http:

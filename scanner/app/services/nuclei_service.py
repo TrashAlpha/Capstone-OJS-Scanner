@@ -67,13 +67,13 @@ class NucleiService:
 
         return templates
 
-    def run_scan(self, target_url: str, templates: list[str] = None) -> dict:
+    def run_scan(self, target_url: str, scan_profile: str = "general") -> dict:
         """
         Jalankan Nuclei scan terhadap target.
 
         Args:
             target_url: URL target yang akan di-scan
-            templates: List nama template (tanpa .yaml). None = semua template.
+            scan_profile: "general" (OJS + Common Vulns) atau "ojs_only" (OJS khusus)
 
         Returns:
             dict dengan keys: findings, raw_output, errors, stats
@@ -95,19 +95,22 @@ class NucleiService:
             "-rate-limit", str(self.rate_limit),
             "-timeout", "10",                # Per-request timeout
             "-retries", "1",
-            "-no-update-check",              # Skip update check
+            "-duc",                          # Skip update check
+            "-stats",                        # Enable progress logging
+            "-si", "5",                      # Log progress every 5 seconds
         ]
 
-        # Tentukan templates yang digunakan
-        template_paths = self._resolve_templates(templates)
-        if template_paths:
-            for tp in template_paths:
-                cmd.extend(["-t", tp])
-        else:
-            # Gunakan seluruh folder templates
+        if scan_profile == "ojs_only":
+            # Hanya gunakan folder templates OJS kita
             cmd.extend(["-t", self.templates_dir])
+        else:
+            # Gunakan folder templates OJS kita + template general bawaan
+            cmd.extend([
+                "-t", self.templates_dir,
+                "-as" # automatic scan (detect technology and run relevant default templates)
+            ])
 
-        logger.info(f"Running Nuclei scan on {target_url}")
+        logger.info(f"Running Nuclei scan on {target_url} with profile: {scan_profile}")
         logger.debug(f"Command: {' '.join(cmd)}")
 
         try:
@@ -185,6 +188,12 @@ class NucleiService:
 
         return paths
 
+    def _normalize_list_field(self, value) -> str:
+        """Nuclei v3 returns cve-id/cwe-id as list; normalize to comma-separated string."""
+        if isinstance(value, list):
+            return ", ".join(str(v) for v in value if v)
+        return str(value) if value else ""
+
     def _parse_jsonl_output(self, raw_output: str) -> list[dict]:
         """Parse Nuclei JSONL output menjadi list of finding dicts."""
         findings = []
@@ -222,8 +231,8 @@ class NucleiService:
             "extracted_results": raw.get("extracted-results", []),
             "curl_command": raw.get("curl-command", ""),
             "type": raw.get("type", "http"),
-            "cve_id": classification.get("cve-id", ""),
-            "cwe_id": classification.get("cwe-id", ""),
+            "cve_id": self._normalize_list_field(classification.get("cve-id", "")),
+            "cwe_id": self._normalize_list_field(classification.get("cwe-id", "")),
             "cvss_score": classification.get("cvss-score", 0),
             "cvss_metrics": classification.get("cvss-metrics", ""),
             "tags": info.get("tags", []),

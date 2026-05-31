@@ -14,19 +14,92 @@ import requests
 from bs4 import BeautifulSoup
 from scanners.base import ScannerModule, Finding
 
+# ── Versi OJS dengan kerentanan yang diketahui ────────────────
+# Format: dot-normalized (dash diganti dot). "3.3.0" cocok dengan semua 3.3.0.x via prefix.
+VULNERABLE_VERSIONS = {
+    "3.4.0.0",
+    "3.3.0",
+    "3.2.1.3", "3.2.1.2", "3.2.1.1", "3.2.1",
+    "3.2.0.3", "3.2.0.2", "3.2.0.1", "3.2.0",
+    "3.1.2.4", "3.1.2.3", "3.1.2.2", "3.1.2.1", "3.1.2",
+    "3.1.1.4", "3.1.1.3", "3.1.1.2", "3.1.1.1", "3.1.1",
+    "3.1.0.1", "3.1.0",
+    "3.0.2", "3.0.1", "3.0.0",
+}
+
+
+def is_vulnerable_version(version: str) -> bool:
+    """Cek apakah versi OJS termasuk versi dengan kerentanan yang diketahui."""
+    normalized = version.replace("-", ".")
+    # Semua versi < 3.0 (OJS 1.x dan 2.x) sudah deprecated
+    if re.match(r"^[12]\.", normalized):
+        return True
+    for vuln_ver in VULNERABLE_VERSIONS:
+        if normalized == vuln_ver or normalized.startswith(vuln_ver + "."):
+            return True
+    return False
+
+
 # ── CVE Database (tambahkan terus sesuai update) ──────────────
 CVE_MAP = {
     # Format: "versi_prefix": [{"id": "CVE-...", "severity": "...", "desc": "..."}]
     "3.3.0": [
+        {
+            "id": "CVE-2024-56525",
+            "severity": "critical",
+            "desc": "XXE (XML External Entity) via User XML Import Plugin — memungkinkan baca file server arbitrari",
+        },
+        {
+            "id": "CVE-2024-24511",
+            "severity": "medium",
+            "desc": "Stored XSS via field Title di submission metadata",
+        },
+        {
+            "id": "CVE-2024-24512",
+            "severity": "medium",
+            "desc": "Stored XSS via field Subtitle di submission metadata",
+        },
+        {
+            "id": "CVE-2023-5626",
+            "severity": "high",
+            "desc": "Cross-Site Request Forgery (CSRF) — memungkinkan aksi tidak sah atas nama user yang login",
+        },
+        {
+            "id": "CVE-2023-6671",
+            "severity": "high",
+            "desc": "Cross-Site Request Forgery (CSRF) pada form submission OJS 3.3.0.13",
+        },
         {
             "id": "CVE-2023-29005",
             "severity": "critical",
             "desc": "Remote Code Execution via unsafe deserialization",
         },
         {
-            "id": "CVE-2023-6671",
-            "severity": "high",
-            "desc": "Cross-Site Request Forgery (CSRF) pada form submission",
+            "id": "CVE-2023-5894",
+            "severity": "medium",
+            "desc": "Stored XSS via profil user dan metadata submission",
+        },
+    ],
+    "3.4": [
+        {
+            "id": "CVE-2024-56525",
+            "severity": "critical",
+            "desc": "XXE (XML External Entity) via User XML Import Plugin (OJS < 3.4.0.8)",
+        },
+        {
+            "id": "CVE-2024-24511",
+            "severity": "medium",
+            "desc": "Stored XSS via field Title di submission (OJS 3.4.x)",
+        },
+        {
+            "id": "CVE-2024-24512",
+            "severity": "medium",
+            "desc": "Stored XSS via field Subtitle di submission (OJS 3.4.x)",
+        },
+        {
+            "id": "CVE-2024-25434",
+            "severity": "medium",
+            "desc": "Stored XSS via parameter publicname di submission OJS 3.4.0",
         },
     ],
     "3.2": [
@@ -34,6 +107,11 @@ CVE_MAP = {
             "id": "CVE-2021-27183",
             "severity": "high",
             "desc": "Stored XSS via journal title field",
+        },
+        {
+            "id": "CVE-2022-24181",
+            "severity": "medium",
+            "desc": "Reflected XSS via X-Forwarded-Host header",
         },
     ],
     "3.1": [
@@ -88,6 +166,26 @@ class VersionScanner(ScannerModule):
                 module=self.name,
                 url=self.target_url,
             ))
+
+            # ── Cek versi berbahaya ────────────────────────────
+            if is_vulnerable_version(version):
+                findings.append(Finding(
+                    title=f"OJS Vulnerable Version In Use: {version}",
+                    severity="high",
+                    description=(
+                        f"OJS versi {version} diketahui memiliki kerentanan keamanan yang belum di-patch. "
+                        "Versi ini tidak lagi menerima security update dari PKP."
+                    ),
+                    evidence=f"Detected version: {version}",
+                    module=self.name,
+                    cve="Multiple",
+                    remediation="Update OJS ke versi terbaru di https://pkp.sfu.ca/ojs/ojs_download/",
+                    url=self.target_url,
+                    extra={
+                        "cwe_id": "CWE-1104",
+                        "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L/A:L",
+                    },
+                ))
 
             # ── CVE Mapping ────────────────────────────────────
             cves = get_cves_for_version(version)

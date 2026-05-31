@@ -87,6 +87,9 @@ def analyze_scan_results():
         name = item.get("name", "Unknown Vulnerability")
         vector = item.get("cvss_vector", "")
         cwe_id = item.get("cwe_id", "N/A")
+        if isinstance(cwe_id, list):
+            cwe_id = cwe_id[0] if cwe_id else "N/A"
+        cwe_id = str(cwe_id) if cwe_id else "N/A"
         evidence = item.get("extracted_results", "No evidence found")
 
         # Hitung skor: pakai base_score jika ada, kalau tidak hitung dari vector

@@ -54,6 +54,13 @@ def count_by_severity(findings: list[dict]) -> dict:
     return counts
 
 
+def _list_to_str(value) -> str:
+    """Nuclei v3 returns cve-id/cwe-id as list; normalize to comma-separated string."""
+    if isinstance(value, list):
+        return ", ".join(str(v) for v in value if v)
+    return str(value) if value else ""
+
+
 def normalize_finding(nuclei_finding: dict) -> dict:
     """
     Normalize satu finding dari format Nuclei ke format internal.
@@ -78,8 +85,8 @@ def normalize_finding(nuclei_finding: dict) -> dict:
         "extracted_results": nuclei_finding.get("extracted-results", []),
         "curl_command": nuclei_finding.get("curl-command", ""),
         "type": nuclei_finding.get("type", "http"),
-        "cve_id": classification.get("cve-id", ""),
-        "cwe_id": classification.get("cwe-id", ""),
+        "cve_id": _list_to_str(classification.get("cve-id", "")),
+        "cwe_id": _list_to_str(classification.get("cwe-id", "")),
         "cvss_score": classification.get("cvss-score", 0),
         "cvss_metrics": classification.get("cvss-metrics", ""),
         "tags": info.get("tags", []),
@@ -115,5 +122,63 @@ def findings_to_risk_engine_format(findings: list[dict]) -> list[dict]:
             ),
             "base_score": f.get("cvss_score", 0),
         })
+
+    return risk_findings
+
+
+# Severity → CVSS base score default (digunakan jika CVE tidak punya skor eksplisit)
+_SEVERITY_SCORE_MAP = {
+    "critical": 9.0,
+    "high": 7.5,
+    "medium": 5.0,
+    "low": 2.5,
+    "info": 0.0,
+}
+
+# Severity → CWE generik fallback
+_SEVERITY_CWE_MAP = {
+    "critical": "CWE-284",
+    "high": "CWE-269",
+    "medium": "CWE-200",
+    "low": "CWE-693",
+    "info": "CWE-0",
+}
+
+
+def python_findings_to_risk_engine_format(module_results: list[dict]) -> list[dict]:
+    """
+    Konversi output dari Python scanner modules (Finding.to_dict()) ke format Risk Engine.
+
+    Input (dari ScannerModule.result()):
+        [{ "module": str, "findings": [Finding.to_dict(), ...], "raw": {} }, ...]
+
+    Finding.to_dict() fields: title, severity, description, evidence, module, cve, url, extra
+
+    Output per finding (format Risk Engine):
+        { name, cvss_vector, cwe_id, extracted_results, base_score }
+    """
+    risk_findings = []
+
+    for module_result in module_results:
+        for finding in module_result.get("findings", []):
+            severity = finding.get("severity", "info").lower()
+            base_score = _SEVERITY_SCORE_MAP.get(severity, 0.0)
+
+            # Ambil CWE dari extra jika ada, fallback ke default severity
+            cwe_id = (
+                finding.get("extra", {}).get("cwe_id")
+                or _SEVERITY_CWE_MAP.get(severity, "CWE-0")
+            )
+
+            # Build CVSS vector minimal dari severity jika tidak ada vektor eksplisit
+            cvss_vector = finding.get("extra", {}).get("cvss_vector", "")
+
+            risk_findings.append({
+                "name": finding.get("title", "Unknown Finding"),
+                "cvss_vector": cvss_vector,
+                "cwe_id": cwe_id,
+                "extracted_results": finding.get("evidence", ""),
+                "base_score": base_score,
+            })
 
     return risk_findings
