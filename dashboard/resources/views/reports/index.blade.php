@@ -24,7 +24,7 @@
       @php $risk = strtolower($scanRun->summary_severity ?? 'informational'); @endphp
       <tr>
         <td class="mono">{{ $scanRun->target_url }}</td>
-        <td><span class="badge {{ $scanRun->scan_type === 'external' ? 'type-ext' : 'type-int' }}">{{ strtoupper($scanRun->scan_type) }}</span></td>
+        <td><span class="badge {{ match($scanRun->scan_type) { 'external' => 'type-ext', 'internal' => 'type-int', 'full' => 'type-full', default => 'type-ext' } }}">{{ strtoupper($scanRun->scan_type) }}</span></td>
         <td>{{ $scanRun->summary_total_findings }}</td>
         <td class="mono">{{ number_format($scanRun->summary_max_score, 1) }}</td>
         <td><span class="badge risk-{{ $risk }}">{{ strtoupper($risk) }}</span></td>

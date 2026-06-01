@@ -23,7 +23,7 @@ NUCLEI_RATE_LIMIT = int(os.getenv("NUCLEI_RATE_LIMIT", "50"))
 # ── LLM (Gemini 3.5 Flash) ────────────────────────────────────
 LLM_API_KEY = os.getenv("LLM_API_KEY", "")
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
-LLM_MODEL = os.getenv("LLM_MODEL", "gemini-3.5-flash")
+LLM_MODEL = os.getenv("LLM_MODEL", "gemini-2.5-flash")
 
 # ── Target default ─────────────────────────────────────────────
 OJS_URL = os.getenv("OJS_URL", "http://ojs")

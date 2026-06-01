@@ -116,12 +116,18 @@ td { padding: 10px 14px; color: var(--text-primary); border-bottom: 1px solid va
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: var(--bg-tertiary); }
 .mono { font-family: 'SFMono-Regular', 'Consolas', monospace; font-size: 11px; color: var(--accent); }
-.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; }
-.risk-high   { background: #f8514922; color: var(--danger); }
-.risk-medium { background: #f0883e22; color: var(--warning); }
-.risk-low    { background: #3fb95022; color: var(--success); }
-.type-ext { background: var(--accent-bg); color: var(--accent); }
-.type-int { background: var(--bg-tertiary); color: var(--text-secondary); }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; letter-spacing: 0.3px; }
+/* Severity */
+.risk-critical     { background: #f8514935; color: #ff7b72; border: 1px solid #f8514945; }
+.risk-high         { background: #f0883e28; color: #ffa657; border: 1px solid #f0883e40; }
+.risk-medium       { background: #f2cc6022; color: #e3b341; border: 1px solid #f2cc6040; }
+.risk-low          { background: #3fb95022; color: #56d364; border: 1px solid #3fb95040; }
+.risk-informational,
+.risk-info         { background: #8b949e18; color: #8b949e; border: 1px solid #8b949e30; }
+/* Scan type */
+.type-ext  { background: #1f6feb28; color: #58a6ff; border: 1px solid #1f6feb45; }
+.type-int  { background: #3fb95022; color: #56d364; border: 1px solid #3fb95040; }
+.type-full { background: #a371f725; color: #d2a8ff; border: 1px solid #a371f745; }
 .link-action { color: var(--accent); font-size: 11px; text-decoration: none; }
 
 /* ===================== FORM ELEMENTS ===================== */
@@ -228,9 +234,13 @@ html.light [style*="border-top:1px solid #21262d"] { border-color: var(--border)
 html.light .scan-info-card { background: var(--bg-secondary) !important; border-color: var(--border) !important; }
 html.light [style*="color:#f0883e"] { color: var(--warning) !important; }
 
-/* Fix badge */
-html.light .risk-high   { background: #b91c1c20 !important; color: var(--danger) !important; }
-html.light .risk-medium { background: #92400e20 !important; color: var(--warning) !important; }
-html.light .risk-low    { background: #16653420 !important; color: var(--success) !important; }
-html.light .type-ext { background: var(--accent-bg) !important; color: var(--accent) !important; }
-html.light .type-int { background: var(--bg-tertiary) !important; color: var(--text-secondary) !important; }
+/* Fix badge — light mode */
+html.light .risk-critical     { background: #fee2e2 !important; color: #dc2626 !important; border-color: #fca5a5 !important; }
+html.light .risk-high         { background: #ffedd5 !important; color: #ea580c !important; border-color: #fdba74 !important; }
+html.light .risk-medium       { background: #fef9c3 !important; color: #ca8a04 !important; border-color: #fde047 !important; }
+html.light .risk-low          { background: #dcfce7 !important; color: #16a34a !important; border-color: #86efac !important; }
+html.light .risk-informational,
+html.light .risk-info         { background: #f1f5f9 !important; color: #64748b !important; border-color: #cbd5e1 !important; }
+html.light .type-ext  { background: #dbeafe !important; color: #1d4ed8 !important; border-color: #93c5fd !important; }
+html.light .type-int  { background: #dcfce7 !important; color: #15803d !important; border-color: #86efac !important; }
+html.light .type-full { background: #f3e8ff !important; color: #7c3aed !important; border-color: #c4b5fd !important; }

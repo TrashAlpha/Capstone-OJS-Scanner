@@ -40,12 +40,18 @@ class TelegramIntegrationController extends Controller
 
     public function sendTest(Request $request, TelegramService $telegram): RedirectResponse
     {
+        if (! $telegram->hasBotToken()) {
+            return redirect()
+                ->route('integrations.telegram.edit')
+                ->withErrors(['telegram_chat_id' => 'Bot token belum dikonfigurasi. Pastikan TELEGRAM_BOT_TOKEN sudah diset di environment.']);
+        }
+
         $user = $request->user()?->fresh();
 
         if (! $user || ! $user->telegram_notifications_enabled || ! $user->telegram_chat_id) {
             return redirect()
                 ->route('integrations.telegram.edit')
-                ->withErrors(['telegram_chat_id' => 'Please save your Telegram Chat ID first.']);
+                ->withErrors(['telegram_chat_id' => 'Simpan Chat ID terlebih dahulu sebelum mengirim test message.']);
         }
 
         $sent = $telegram->sendTestMessage($user);

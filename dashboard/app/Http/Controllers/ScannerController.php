@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ScanFinding;
+use App\Models\ScanLog;
 use App\Models\ScanRun;
-use App\Services\RiskEngineService;
-use App\Services\ScannerService;
-use App\Services\TelegramService;
+use App\Services\ScanRunner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Throwable;
@@ -15,38 +13,21 @@ class ScannerController extends Controller
 {
     public function logs(Request $request)
     {
-        $query = ScanFinding::query()->with('scanRun')->latest('scanned_at');
+        $query = ScanLog::latest('created_at');
 
-        if ($request->filled('risk')) {
-            $query->where('risk', strtolower((string) $request->string('risk')));
+        if ($request->filled('search')) {
+            $query->where('target_url', 'like', '%'.(string) $request->string('search').'%');
         }
 
         if ($request->filled('type')) {
-            $query->where('type', strtolower((string) $request->string('type')));
+            $query->where('scan_type', (string) $request->string('type'));
         }
 
-        if ($request->filled('search')) {
-            $search = (string) $request->string('search');
-            $query->where(function ($q) use ($search): void {
-                $q->where('target', 'like', "%{$search}%")
-                    ->orWhere('finding', 'like', "%{$search}%")
-                    ->orWhere('category', 'like', "%{$search}%");
-            });
+        if ($request->filled('status')) {
+            $query->where('status', (string) $request->string('status'));
         }
 
-        $logs = $query->get()->map(function (ScanFinding $log): array {
-            return [
-                'id' => $log->id,
-                'scan_run_id' => $log->scan_run_id,
-                'target' => $log->target,
-                'type' => $log->type,
-                'category' => $log->category,
-                'finding' => $log->finding,
-                'cvss_score' => $log->cvss_score,
-                'risk' => $log->risk,
-                'scanned_at' => optional($log->scanned_at)->format('Y-m-d H:i:s') ?? '-',
-            ];
-        })->all();
+        $logs = $query->limit(100)->get();
 
         return view('scanner.logs', compact('logs'));
     }
@@ -66,39 +47,26 @@ class ScannerController extends Controller
         ]);
     }
 
-    public function execute(Request $request, ScannerService $scanner, RiskEngineService $riskEngine, TelegramService $telegram): RedirectResponse
+    public function execute(Request $request, ScanRunner $runner): RedirectResponse
     {
         $validated = $request->validate([
-            'ojs_url' => ['required', 'url'],
-            'scan_type' => ['required', 'in:external,internal,full'],
+            'ojs_url'        => ['required', 'url'],
+            'scan_type'      => ['required', 'in:external,internal,full'],
             'admin_username' => ['nullable', 'string', 'max:255'],
             'admin_password' => ['nullable', 'string', 'max:255'],
         ]);
 
         try {
-            $scanResponse = $scanner->runScan(
+            $runner->dispatch(
                 $validated['ojs_url'],
                 $validated['scan_type'],
                 $validated['admin_username'] ?? null,
                 $validated['admin_password'] ?? null,
+                auth()->id(),
             );
 
-            $analysis = $riskEngine->analyzeScannerResults($scanResponse);
-            $scanRun = $this->storeScanRun($validated, $scanResponse, $analysis);
-            $telegramSent = $request->user() ? $telegram->sendScanSummary($request->user(), $scanRun) : false;
-
-            $message = 'Scan completed successfully.';
-            if ($telegramSent) {
-                $message .= ' Telegram notification sent.';
-            } elseif ($request->user()?->telegram_notifications_enabled) {
-                $message .= ' Telegram notification could not be delivered.';
-            }
-
-            if (! empty($scanResponse['warnings'])) {
-                $message .= ' Warning: '.implode(' ', $scanResponse['warnings']);
-            }
-
-            return redirect()->route('scanner.show', $scanRun)->with('status', $message);
+            return redirect()->route('dashboard')
+                ->with('status', 'Scan dimulai untuk '.$validated['ojs_url'].'. Hasil akan muncul otomatis di dashboard.');
         } catch (Throwable $e) {
             return redirect()
                 ->route('scanner.run')
@@ -107,46 +75,28 @@ class ScannerController extends Controller
         }
     }
 
-    private function storeScanRun(array $validated, array $scanResponse, array $analysis): ScanRun
+    public function poll(ScanRun $scanRun, ScanRunner $runner): \Illuminate\Http\JsonResponse
     {
-        $scannedAt = $scanResponse['generated_at'] ?? now()->toIso8601String();
+        if ($scanRun->status !== 'running') {
+            return response()->json(['status' => $scanRun->status]);
+        }
 
-        $scanRun = ScanRun::create([
-            'user_id' => auth()->id(),
-            'target_url' => $scanResponse['target_url'] ?? $validated['ojs_url'],
-            'scan_type' => strtolower($scanResponse['scan_type'] ?? $validated['scan_type']),
-            'status' => 'completed',
-            'summary_total_findings' => $analysis['summary']['total_findings'] ?? 0,
-            'summary_max_score' => $analysis['summary']['overall_max_score'] ?? 0,
-            'summary_severity' => $analysis['summary']['overall_severity'] ?? 'INFORMATIONAL',
-            'warnings' => $scanResponse['warnings'] ?? [],
-            'scanner_payload' => $scanResponse,
-            'risk_payload' => $analysis,
-            'scanned_at' => $scannedAt,
-        ]);
+        $status = $runner->finalize($scanRun);
 
-        $scanRun->findings()->createMany($this->buildFindings($scanResponse, $analysis));
+        if ($status === 'completed') {
+            return response()->json([
+                'status'   => 'completed',
+                'redirect' => route('scanner.show', $scanRun),
+            ]);
+        }
 
-        return $scanRun;
-    }
+        if ($status === 'failed') {
+            return response()->json([
+                'status' => 'failed',
+                'error'  => 'Scan gagal',
+            ]);
+        }
 
-    private function buildFindings(array $scanResponse, array $analysis): array
-    {
-        $target = $scanResponse['target_url'] ?? 'Unknown Target';
-        $type = strtolower($scanResponse['scan_type'] ?? 'external');
-        $scannedAt = $scanResponse['generated_at'] ?? now()->toIso8601String();
-
-        return collect($analysis['details'] ?? [])->map(fn (array $item) => [
-            'target' => $target,
-            'type' => $type,
-            'category' => $item['category'] ?? '-',
-            'finding' => $item['vulnerability_name'] ?? '-',
-            'cvss_score' => $item['cvss_score'] ?? 0,
-            'risk' => strtolower($item['severity'] ?? 'informational'),
-            'scanned_at' => $scannedAt,
-            'evidence' => $item['evidence'] ?? '-',
-            'cwe_id' => $item['cwe_id'] ?? 'N/A',
-            'cvss_vector' => $item['cvss_vector'] ?? '',
-        ])->all();
+        return response()->json(['status' => 'running']);
     }
 }

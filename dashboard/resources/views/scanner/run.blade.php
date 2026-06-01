@@ -79,24 +79,31 @@
                     Scan Type
                 </label>
                 <div style="display:flex; gap:8px;">
-                    <label style="flex:1; background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:8px 12px; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:12px;">
-                        <input type="radio" name="scan_type" value="external" {{ old('scan_type', 'external') === 'external' ? 'checked' : '' }}> External Only
+                    <label style="flex:1; background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:10px 14px; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:12px;">
+                        <input type="radio" name="scan_type" value="external" {{ old('scan_type', 'external') === 'external' ? 'checked' : '' }}> External
                     </label>
-                    <label style="flex:1; background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:8px 12px; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:12px;">
-                        <input type="radio" name="scan_type" value="internal" {{ old('scan_type') === 'internal' ? 'checked' : '' }}> Internal Only
+                    <label style="flex:1; background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:10px 14px; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:12px;">
+                        <input type="radio" name="scan_type" value="internal" {{ old('scan_type') === 'internal' ? 'checked' : '' }}> Internal
                     </label>
-                    <label style="flex:1; background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:8px 12px; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:12px;">
+                    <label style="flex:1; background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:10px 14px; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:12px;">
                         <input type="radio" name="scan_type" value="full" {{ old('scan_type') === 'full' ? 'checked' : '' }}> Full Scan
                     </label>
                 </div>
             </div>
 
             {{-- SUBMIT --}}
-            <button type="submit"
+            <button type="submit" id="submitBtn"
                 style="width:100%; background:#1f6feb; border:none; color:#fff; padding:10px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
                 Start Scan
             </button>
         </form>
+
+        {{-- LOADING OVERLAY --}}
+        <div id="scanningOverlay" style="display:none; margin-top:1.25rem; background:#0d1117; border:1px solid #1f6feb44; border-radius:8px; padding:1rem; text-align:center;">
+            <div style="font-size:13px; color:#58a6ff; font-weight:600; margin-bottom:6px;">Scanning in progress...</div>
+            <div style="font-size:11px; color:#8b949e;">Elapsed: <span id="elapsedTimer">0s</span></div>
+            <div style="font-size:11px; color:#484f58; margin-top:4px;">Jangan tutup halaman ini. Scan bisa memakan waktu 1–5 menit.</div>
+        </div>
     </div>
 
     {{-- INFO CARD --}}
@@ -132,6 +139,27 @@
 @endsection
 
 @push('scripts')
+<style>
+/* Dark mode autofill */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #0d1117 inset !important;
+    -webkit-text-fill-color: #e6edf3 !important;
+    border: 1px solid #30363d !important;
+    caret-color: #e6edf3;
+    transition: background-color 5000s ease-in-out 0s;
+}
+/* Light mode autofill */
+html.light input:-webkit-autofill,
+html.light input:-webkit-autofill:hover,
+html.light input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+    -webkit-text-fill-color: #1f2328 !important;
+    border: 1px solid #afb8c1 !important;
+    caret-color: #1f2328;
+}
+</style>
 <script>
 function togglePassword() {
     const input = document.getElementById('passwordInput');
@@ -144,5 +172,28 @@ function togglePassword() {
         btn.textContent = 'SHOW';
     }
 }
+
+(function () {
+    const form    = document.getElementById('scanForm');
+    const btn     = document.getElementById('submitBtn');
+    const overlay = document.getElementById('scanningOverlay');
+    const timer   = document.getElementById('elapsedTimer');
+    let seconds   = 0;
+    let interval  = null;
+
+    form.addEventListener('submit', function () {
+        btn.disabled    = true;
+        btn.textContent = 'Scanning...';
+        btn.style.opacity = '0.6';
+        overlay.style.display = 'block';
+
+        interval = setInterval(function () {
+            seconds++;
+            timer.textContent = seconds < 60
+                ? seconds + 's'
+                : Math.floor(seconds / 60) + 'm ' + (seconds % 60) + 's';
+        }, 1000);
+    });
+})();
 </script>
 @endpush

@@ -53,8 +53,8 @@ class ReportService:
                 },
             },
 
-            # ── Detail Nuclei findings ─────────────────────────
-            "nuclei_results": findings,
+            # ── Detail Nuclei findings (enriched dengan LLM remediation) ──
+            "nuclei_results": self._enrich_findings(findings, llm_analysis),
 
             # ── Analisis LLM ───────────────────────────────────
             "llm_analysis": {
@@ -62,6 +62,8 @@ class ReportService:
                 "risk_assessment": llm_analysis.get("risk_assessment", ""),
                 "recommendations": llm_analysis.get("recommendations", []),
                 "finding_analysis": llm_analysis.get("finding_analysis", []),
+                "llm_failed": llm_analysis.get("llm_failed", False),
+                "raw_response": llm_analysis.get("raw_response", ""),
             },
 
             # ── Error/warnings ─────────────────────────────────
@@ -75,6 +77,28 @@ class ReportService:
         )
 
         return report
+
+    def _enrich_findings(self, findings: list, llm_analysis: dict) -> list:
+        """Merge remediation & impact dari LLM ke tiap finding, match by template_id."""
+        fa_list = llm_analysis.get("finding_analysis", [])
+        remediation_map = {
+            fa.get("template_id", ""): fa
+            for fa in fa_list
+            if fa.get("template_id")
+        }
+
+        enriched = []
+        for finding in findings:
+            f = dict(finding)
+            tid = f.get("template_id", "")
+            if tid and tid in remediation_map:
+                fa = remediation_map[tid]
+                f["remediation"]    = fa.get("remediation", "")
+                f["impact"]         = fa.get("impact", "")
+                f["llm_risk_level"] = fa.get("risk_level", "")
+            enriched.append(f)
+
+        return enriched
 
     def generate_nuclei_only(
         self,
@@ -90,7 +114,7 @@ class ReportService:
 
         return {
             "target_url": target_url,
-            "scan_type": "nuclei_only",
+            "scan_type": "external_nuclei",
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "scan_duration_seconds": round(scan_duration, 2),
             "summary": {

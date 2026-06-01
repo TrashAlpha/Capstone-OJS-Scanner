@@ -55,7 +55,73 @@ class TelegramService
         ]);
     }
 
-    public function sendMessage(string $chatId, string $message, array $context = []): bool
+    public function sendHighCriticalAlert(User $user, ScanRun $scanRun): bool
+    {
+        if (! $this->canSendToUser($user)) {
+            Log::info('Telegram alert skipped: canSendToUser=false', [
+                'user_id'     => $user->id,
+                'enabled'     => $user->telegram_notifications_enabled,
+                'has_chat_id' => filled($user->telegram_chat_id),
+                'has_token'   => $this->hasBotToken(),
+            ]);
+            return false;
+        }
+
+        $findings = $scanRun->findings()
+            ->whereIn('risk', ['critical', 'high'])
+            ->orderByDesc('cvss_score')
+            ->get();
+
+        Log::info('Telegram alert: findings found', [
+            'scan_run_id'    => $scanRun->id,
+            'findings_count' => $findings->count(),
+        ]);
+
+        if ($findings->isEmpty()) {
+            return false;
+        }
+
+        $criticals = $findings->where('risk', 'critical');
+        $highs     = $findings->where('risk', 'high');
+
+        $lines = [
+            '⚠️ <b>OJS Security Alert</b>',
+            '',
+            'Target: '.$scanRun->target_url,
+            'Tipe Scan: '.strtoupper($scanRun->scan_type).' | Total Findings: '.$scanRun->summary_total_findings,
+        ];
+
+        $counter = 1;
+
+        if ($criticals->isNotEmpty()) {
+            $lines[] = '';
+            $lines[] = '🔴 <b>CRITICAL ('.$criticals->count().')</b>';
+            foreach ($criticals as $f) {
+                $lines[] = $counter.'. '.htmlspecialchars($f->finding).' — CVSS '.number_format((float) $f->cvss_score, 1);
+                $lines[] = '   CWE: '.($f->cwe_id ?: '-').' | Kategori: '.($f->category ?: '-');
+                $counter++;
+            }
+        }
+
+        if ($highs->isNotEmpty()) {
+            $lines[] = '';
+            $lines[] = '🟠 <b>HIGH ('.$highs->count().')</b>';
+            foreach ($highs as $f) {
+                $lines[] = $counter.'. '.htmlspecialchars($f->finding).' — CVSS '.number_format((float) $f->cvss_score, 1);
+                $lines[] = '   CWE: '.($f->cwe_id ?: '-').' | Kategori: '.($f->category ?: '-');
+                $counter++;
+            }
+        }
+
+        return $this->sendMessage(
+            $user->telegram_chat_id,
+            implode("\n", $lines),
+            ['user_id' => $user->id, 'scan_run_id' => $scanRun->id],
+            'HTML'
+        );
+    }
+
+    public function sendMessage(string $chatId, string $message, array $context = [], string $parseMode = ''): bool
     {
         $botToken = $this->getBotToken();
 
@@ -63,12 +129,14 @@ class TelegramService
             return false;
         }
 
+        $payload = ['chat_id' => $chatId, 'text' => $message];
+        if ($parseMode !== '') {
+            $payload['parse_mode'] = $parseMode;
+        }
+
         $response = Http::timeout(15)
             ->asForm()
-            ->post("https://api.telegram.org/bot{$botToken}/sendMessage", [
-                'chat_id' => $chatId,
-                'text' => $message,
-            ]);
+            ->post("https://api.telegram.org/bot{$botToken}/sendMessage", $payload);
 
         if (! $response->successful()) {
             Log::warning('Telegram notification failed', array_merge($context, [
