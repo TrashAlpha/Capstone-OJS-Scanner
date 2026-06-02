@@ -98,7 +98,7 @@ services:
       # LLM Configuration (Gemini 3.5 Flash)
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_PROVIDER: gemini
-      LLM_MODEL: gemini-3.5-flash
+      LLM_MODEL: gemini-2.5-flash
       # Nuclei Configuration
       NUCLEI_TIMEOUT: 300
       NUCLEI_RATE_LIMIT: 50
@@ -156,10 +156,14 @@ services:
     depends_on:
       - risk-engine
       - app-db
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
-      APP_URL: http://localhost/dashboard
+      APP_URL: http://localhost:8080/dashboard
+      ASSET_URL: http://localhost:8080/dashboard
       DB_CONNECTION: mysql
       DB_HOST: app-db
       DB_PORT: 3306

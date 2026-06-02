@@ -33,6 +33,10 @@
       <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
       Run Scan
     </a>
+    <a href="{{ route('scanner.schedules.index') }}" class="sidebar-link {{ request()->routeIs('scanner.schedules.*') ? 'active' : '' }}">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Scheduled Scans
+    </a>
 
     <div class="sidebar-section">Reports</div>
     <a href="{{ route('reports.index') }}" class="sidebar-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">

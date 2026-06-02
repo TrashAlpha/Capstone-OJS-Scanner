@@ -105,6 +105,24 @@
         This project uses a simple Telegram bot service with polling, so you do not need to configure a public webhook URL.
       </div>
     </div>
+
+    <div style="background:#161b22; border:1px solid #f0883e33; border-radius:10px; padding:1.25rem;">
+      <div style="font-size:12px; font-weight:600; color:#f0883e; margin-bottom:0.75rem;">Kapan alert dikirim?</div>
+      <div style="font-size:11px; color:#8b949e; line-height:1.8;">
+        Alert otomatis terkirim ke Telegram kamu setiap kali scan selesai dan ditemukan kerentanan dengan tingkat:
+      </div>
+      <div style="margin-top:8px; display:flex; flex-direction:column; gap:4px;">
+        <div style="font-size:11px; display:flex; align-items:center; gap:6px;">
+          <span>🔴</span><span style="color:#f85149; font-weight:700;">CRITICAL</span>
+        </div>
+        <div style="font-size:11px; display:flex; align-items:center; gap:6px;">
+          <span>🟠</span><span style="color:#f0883e; font-weight:700;">HIGH</span>
+        </div>
+      </div>
+      <div style="font-size:11px; color:#484f58; margin-top:8px; line-height:1.7;">
+        Scan yang hanya menghasilkan temuan LOW atau INFO <strong style="color:#8b949e;">tidak</strong> memicu notifikasi Telegram.
+      </div>
+    </div>
   </div>
 </div>
 @endsection

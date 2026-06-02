@@ -10,7 +10,20 @@ class RiskEngineService
 {
     public function analyze(array $findings): array
     {
+        if (empty($findings)) {
+            return [
+                'summary' => [
+                    'total_findings'    => 0,
+                    'overall_max_score' => 0.0,
+                    'overall_severity'  => 'INFORMATIONAL',
+                ],
+                'details'           => [],
+                'telegram_notified' => false,
+            ];
+        }
+
         $response = Http::timeout(30)
+            ->asJson()
             ->acceptJson()
             ->post(config('services.risk_engine.url').'/analyze', $findings);
 
@@ -28,22 +41,35 @@ class RiskEngineService
 
     public function normalizeScannerResults(array $scanResponse): array
     {
-        return collect($scanResponse['results'] ?? [])
-            ->flatMap(function (array $moduleResult): array {
-                $module = $moduleResult['module'] ?? 'unknown';
+        $findings = [];
 
-                return collect($moduleResult['findings'] ?? [])
-                    ->map(fn (array $finding) => [
-                        'name' => $finding['title'] ?? 'Unknown Vulnerability',
-                        'cwe_id' => $this->guessCweId($module, $finding),
-                        'cvss_vector' => data_get($finding, 'extra.cvss_vector', ''),
-                        'base_score' => data_get($finding, 'extra.base_score') ?? $this->mapSeverityToScore($finding['severity'] ?? 'info'),
-                        'extracted_results' => $finding['evidence'] ?? ($finding['description'] ?? 'No evidence found'),
-                    ])
-                    ->all();
-            })
-            ->values()
-            ->all();
+        // External scan format: nuclei_results
+        foreach ($scanResponse['nuclei_results'] ?? [] as $r) {
+            $extracted = $r['extracted_results'] ?? [];
+            $findings[] = [
+                'name'              => $r['template_name'] ?? $r['template_id'] ?? 'Unknown',
+                'cwe_id'            => $r['cwe_id'] ?? 'N/A',
+                'cvss_vector'       => $r['cvss_metrics'] ?? '',
+                'base_score'        => $r['cvss_score'] ?? $this->mapSeverityToScore($r['severity'] ?? 'info'),
+                'extracted_results' => is_array($extracted) ? implode(', ', $extracted) : ($r['description'] ?? ''),
+            ];
+        }
+
+        // Internal scan format: module_results
+        foreach ($scanResponse['module_results'] ?? [] as $moduleResult) {
+            $module = $moduleResult['module'] ?? 'unknown';
+            foreach ($moduleResult['findings'] ?? [] as $finding) {
+                $findings[] = [
+                    'name'              => $finding['title'] ?? 'Unknown Vulnerability',
+                    'cwe_id'            => $this->guessCweId($module, $finding),
+                    'cvss_vector'       => data_get($finding, 'extra.cvss_vector', ''),
+                    'base_score'        => data_get($finding, 'extra.base_score') ?? $this->mapSeverityToScore($finding['severity'] ?? 'info'),
+                    'extracted_results' => $finding['evidence'] ?? ($finding['description'] ?? 'No evidence found'),
+                ];
+            }
+        }
+
+        return $findings;
     }
 
     private function mapSeverityToScore(string $severity): float

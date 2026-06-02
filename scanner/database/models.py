@@ -13,40 +13,46 @@ class ScanLog:
     """Model untuk menyimpan dan mengambil log scan."""
 
     @staticmethod
-    def create(target_url: str, scan_type: str = "full") -> int | None:
+    def create(target_url: str, scan_type: str = "external") -> int | None:
         """
         Buat record scan baru dengan status 'running'.
 
         Returns:
             ID dari record yang dibuat, atau None jika gagal
         """
-        conn = None
-        cursor = None
-        try:
+        def _insert():
             conn = get_connection()
             cursor = conn.cursor()
+            try:
+                cursor.execute(
+                    "INSERT INTO scan_logs (target_url, scan_type, status) VALUES (%s, %s, 'running')",
+                    (target_url, scan_type),
+                )
+                conn.commit()
+                return cursor.lastrowid
+            finally:
+                cursor.close()
+                conn.close()
 
-            cursor.execute(
-                """
-                INSERT INTO scan_logs (target_url, scan_type, status)
-                VALUES (%s, %s, 'running')
-                """,
-                (target_url, scan_type),
-            )
-            conn.commit()
-
-            scan_id = cursor.lastrowid
+        try:
+            scan_id = _insert()
             logger.info(f"Scan log created: id={scan_id}, target={target_url}")
             return scan_id
-
         except Exception as e:
-            logger.error(f"Failed to create scan log: {e}")
+            # Jika tabel belum ada, coba init ulang lalu insert sekali lagi
+            if "doesn't exist" in str(e) or "1146" in str(e):
+                logger.warning(f"scan_logs table missing, running init_db and retrying...")
+                try:
+                    from database.connection import init_db
+                    init_db()
+                    scan_id = _insert()
+                    logger.info(f"Scan log created after init_db: id={scan_id}, target={target_url}")
+                    return scan_id
+                except Exception as retry_e:
+                    logger.error(f"Failed to create scan log after retry: {retry_e}")
+            else:
+                logger.error(f"Failed to create scan log: {e}")
             return None
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                conn.close()
 
     @staticmethod
     def update_completed(scan_id: int, report: dict) -> bool:
@@ -66,6 +72,12 @@ class ScanLog:
             summary = report.get("summary", {})
             findings_count = summary.get("findings_count", {})
             llm = report.get("llm_analysis", {})
+
+            # Ekstrak hanya keyword risiko untuk kolom VARCHAR(50)
+            # Analisis lengkap LLM tetap ada di result_json
+            risk_raw = llm.get("risk_assessment", "N/A")
+            risk_keywords = ["KRITIS", "TINGGI", "SEDANG", "RENDAH"]
+            risk_short = next((kw for kw in risk_keywords if kw in str(risk_raw).upper()), "N/A")
 
             cursor.execute(
                 """
@@ -90,7 +102,7 @@ class ScanLog:
                     findings_count.get("medium", 0),
                     findings_count.get("low", 0),
                     findings_count.get("info", 0),
-                    llm.get("risk_assessment", "N/A"),
+                    risk_short,
                     report.get("scan_duration_seconds", 0),
                     json.dumps(report, ensure_ascii=False, default=str),
                     datetime.now(timezone.utc),

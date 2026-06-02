@@ -104,11 +104,16 @@ class NucleiService:
             # Hanya gunakan folder templates OJS kita
             cmd.extend(["-t", self.templates_dir])
         else:
-            # Gunakan folder templates OJS kita + template general bawaan
-            cmd.extend([
-                "-t", self.templates_dir,
-                "-as" # automatic scan (detect technology and run relevant default templates)
-            ])
+            # Gunakan folder templates OJS kita + subdirektori terpilih dari default Nuclei templates.
+            # Tidak pakai -as (memfilter via Wappalyzer, OJS sering tidak dikenali).
+            # Tidak pakai -severity (ikut memfilter OJS templates sendiri).
+            # Tambah hanya subdirektori spesifik agar tidak interferensi dengan ribuan template.
+            cmd.extend(["-t", self.templates_dir])
+            default_base = os.path.expanduser("~/nuclei-templates")
+            for subdir in ["http/cves", "http/exposures", "http/misconfiguration", "http/vulnerabilities"]:
+                subdir_path = os.path.join(default_base, subdir)
+                if os.path.isdir(subdir_path):
+                    cmd.extend(["-t", subdir_path])
 
         logger.info(f"Running Nuclei scan on {target_url} with profile: {scan_profile}")
         logger.debug(f"Command: {' '.join(cmd)}")
