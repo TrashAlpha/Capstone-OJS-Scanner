@@ -12,7 +12,7 @@
     {{-- SIDEBAR --}}
     <aside class="sidebar">
       <div class="sidebar-logo">
-          <img src="/images/logo.png" alt="OJS Security Scanner"
+          <img src="{{ asset('images/logo.png') }}" alt="OJS Security Scanner"
               style="width:48px; height:48px; object-fit:contain; margin-bottom:6px;">
           <div class="sidebar-logo-title">OJS Security</div>
           <div class="sidebar-logo-sub">Scanner v1.0</div>

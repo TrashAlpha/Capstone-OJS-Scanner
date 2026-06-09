@@ -15,7 +15,7 @@
 
 <div class="auth-card">
   <div class="auth-logo">
-      <img src="/images/logo.png" alt="OJS Security Scanner"
+      <img src="{{ asset('images/logo.png') }}" alt="OJS Security Scanner"
           style="width:64px; height:64px; object-fit:contain; margin-bottom:10px; display:block; margin-left:auto; margin-right:auto;">
       <div class="auth-logo-title">OJS Security Scanner</div>
       <div class="auth-logo-sub">Create a new account</div>
