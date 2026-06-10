@@ -1,6 +1,6 @@
 # 📦 OJS Security Scanner — Dockerized Vulnerability Scanning Platform
 
-Platform pemindaian kerentanan otomatis untuk **Open Journal Systems (OJS)**, berbasis Docker Compose. Sistem memadukan pemindaian eksternal & internal, analisis berbantuan **LLM (Google Gemini)**, penilaian risiko berbasis **CVSS**, dan notifikasi **Telegram** real-time.
+Platform pemindaian kerentanan otomatis untuk **Open Journal Systems (OJS)**, berbasis Docker Compose. Sistem memadukan pemindaian eksternal & internal, analisis **LLM (Google Gemini)**, penilaian risiko berbasis **CVSS**, dan notifikasi **Telegram** real-time.
 
 🌐 **Situs diseminasi:** [trashalpha.github.io/Capstone-OJS-Scanner](https://trashalpha.github.io/Capstone-OJS-Scanner/)
 📐 **Diagram arsitektur lengkap:** [ARCHITECTURE.md](ARCHITECTURE.md)
