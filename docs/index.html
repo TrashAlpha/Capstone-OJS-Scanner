@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OJS Security Scanner — Capstone Project</title>
+  <meta name="description" content="Platform pemindai kerentanan otomatis untuk Open Journal Systems (OJS): scanning eksternal & internal, analisis LLM, CVSS risk scoring, dan notifikasi Telegram.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===================== NAV ===================== -->
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="#hero" class="brand">
+        <span class="brand-mark">OJS</span>
+        <span class="brand-text">Security Scanner</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#overview">Overview</a>
+        <a href="#fitur">Fitur</a>
+        <a href="#arsitektur">Arsitektur</a>
+        <a href="#teknologi">Teknologi</a>
+        <a href="#cara-kerja">Cara Kerja</a>
+        <a href="#cakupan">Cakupan</a>
+        <a href="#tim">Tim</a>
+      </nav>
+      <a href="https://github.com/TrashAlpha/Capstone-OJS-Scanner" class="btn btn-ghost" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </header>
+
+  <!-- ===================== HERO ===================== -->
+  <section id="hero" class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+      <div class="hero-badge">Capstone Project — Keamanan Aplikasi Web</div>
+      <h1>Pemindai Kerentanan Otomatis untuk <span class="grad">Open Journal Systems</span></h1>
+      <p class="hero-sub">
+        Platform berbasis microservice yang memadukan pemindaian eksternal &amp; internal,
+        analisis kerentanan berbantuan LLM, penilaian risiko berbasis CVSS, dan notifikasi
+        real-time untuk mengamankan instalasi OJS.
+      </p>
+      <div class="hero-cta">
+        <a href="https://github.com/TrashAlpha/Capstone-OJS-Scanner" class="btn btn-primary" target="_blank" rel="noopener">Lihat Repository</a>
+        <a href="#arsitektur" class="btn btn-outline">Pelajari Arsitektur</a>
+      </div>
+      <div class="hero-badges">
+        <span class="tech-pill">Python · Flask</span>
+        <span class="tech-pill">Laravel</span>
+        <span class="tech-pill">Nuclei (Go)</span>
+        <span class="tech-pill">Google Gemini</span>
+        <span class="tech-pill">Docker Compose</span>
+        <span class="tech-pill">MySQL</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== STATS ===================== -->
+  <section class="stats">
+    <div class="stat"><div class="stat-num">7</div><div class="stat-label">Layanan Terkontainerisasi</div></div>
+    <div class="stat"><div class="stat-num">11</div><div class="stat-label">Template Nuclei OJS</div></div>
+    <div class="stat"><div class="stat-num">9</div><div class="stat-label">Modul Pemindai Python</div></div>
+    <div class="stat"><div class="stat-num">5</div><div class="stat-label">Level Severity CVSS</div></div>
+  </section>
+
+  <!-- ===================== OVERVIEW ===================== -->
+  <section id="overview" class="section">
+    <div class="section-head">
+      <span class="eyebrow">Overview</span>
+      <h2>Latar Belakang &amp; Tujuan</h2>
+    </div>
+    <div class="overview-grid">
+      <div class="prose">
+        <p>
+          <strong>Open Journal Systems (OJS)</strong> adalah platform open-source yang dipakai ribuan jurnal
+          ilmiah di seluruh dunia. Karena banyak instalasi jarang diperbarui, OJS rentan terhadap
+          beragam kerentanan seperti XSS, SQL Injection, CSRF, XXE, dan LFI.
+        </p>
+        <p>
+          Proyek ini membangun <strong>pipeline pemindaian keamanan otomatis</strong> yang khusus
+          dirancang untuk OJS. Sistem tidak hanya mendeteksi kerentanan, tetapi juga
+          <strong>memperkaya temuan dengan analisis LLM</strong>, menghitung skor risiko berbasis
+          <strong>CVSS</strong>, menyimpan riwayat audit, dan mengirim peringatan otomatis untuk
+          temuan kritikal.
+        </p>
+      </div>
+      <div class="callout">
+        <h3>Masalah yang Dijawab</h3>
+        <ul class="check">
+          <li>Pemindaian manual lambat dan tidak konsisten</li>
+          <li>Temuan mentah sulit diprioritaskan</li>
+          <li>Tidak ada penilaian risiko terstandar</li>
+          <li>Tidak ada peringatan dini untuk celah kritikal</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FITUR ===================== -->
+  <section id="fitur" class="section alt">
+    <div class="section-head">
+      <span class="eyebrow">Fitur Utama</span>
+      <h2>Apa yang Ditawarkan</h2>
+    </div>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">EX</div>
+        <h3>Pemindaian Eksternal</h3>
+        <p>Nuclei dengan 11 template khusus OJS plus 4 modul Python untuk deteksi tanpa autentikasi: versi, security headers, fuzzing direktori, dan injeksi publik.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">IN</div>
+        <h3>Pemindaian Internal</h3>
+        <p>5 modul terautentikasi: audit keamanan, broken access control, IDOR, parameter injection, dan file upload — menguji celah yang hanya terlihat setelah login.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">AI</div>
+        <h3>Analisis LLM</h3>
+        <p>Google Gemini memperkaya temuan mentah dengan konteks, dampak, dan rekomendasi mitigasi yang mudah dipahami.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">CV</div>
+        <h3>Penilaian Risiko CVSS</h3>
+        <p>Risk Engine menghitung skor CVSS dari vektor, mengklasifikasi severity (Critical hingga Info), dan mengagregasi hasil per pemindaian.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">TG</div>
+        <h3>Notifikasi Telegram</h3>
+        <p>Peringatan otomatis terkirim ke Telegram saat ditemukan kerentanan dengan severity Critical, lengkap dengan ringkasan temuan.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">DB</div>
+        <h3>Dashboard &amp; Penjadwalan</h3>
+        <p>Antarmuka Laravel untuk menjalankan scan, melihat laporan, mengelola jadwal cron, dan integrasi Telegram dalam satu tempat.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ARSITEKTUR ===================== -->
+  <section id="arsitektur" class="section">
+    <div class="section-head">
+      <span class="eyebrow">Arsitektur</span>
+      <h2>Diagram Sistem</h2>
+      <p class="section-desc">
+        Seluruh layanan berjalan dalam Docker Compose dan diakses melalui satu pintu NGINX di port 80.
+      </p>
+    </div>
+    <div class="diagram-wrap">
+      <pre class="mermaid">
+flowchart LR
+    USER["Admin<br/>(Browser)"] -->|"HTTP :80"| NGINX["NGINX<br/>Reverse Proxy"]
+    TGUSER["Telegram User"] <-->|"Chat"| TGAPI["Telegram Bot API"]
+
+    NGINX -->|"/"| OJS["OJS<br/>(Target)"]
+    NGINX -->|"/dashboard/"| DASH["Dashboard<br/>Laravel PHP"]
+    NGINX -->|"/scanner/"| SCAN["Scanner Service<br/>Python Flask"]
+    NGINX -->|"/risk/"| RISK["Risk Engine<br/>Python Flask"]
+
+    DASH -->|"trigger scan"| SCAN
+    SCAN -->|"Nuclei (Go)<br/>+ 11 template"| OJS
+    SCAN -->|"9 modul Python"| OJS
+    SCAN -->|"enrichment"| GEMINI["Google Gemini<br/>LLM"]
+    SCAN -->|"forward findings"| RISK
+
+    RISK -->|"CVSS scoring"| DB[("MySQL<br/>appdb")]
+    RISK -->|"jika CRITICAL"| TGAPI
+    DASH -->|"Eloquent ORM"| DB
+    OJS <--> OJSDB[("MySQL<br/>ojs")]
+
+    classDef proxy fill:#1e3a5f,stroke:#4a9eff,color:#fff
+    classDef svc fill:#1b2540,stroke:#6c8cff,color:#fff
+    classDef db fill:#243a1e,stroke:#5cb85c,color:#fff
+    classDef ext fill:#3a1e36,stroke:#ff69b4,color:#fff
+    classDef tgt fill:#3a2a1e,stroke:#ff8c42,color:#fff
+
+    class NGINX proxy
+    class DASH,SCAN,RISK svc
+    class DB,OJSDB db
+    class GEMINI,TGAPI ext
+    class OJS tgt
+      </pre>
+    </div>
+    <p class="diagram-note">
+      Diagram lengkap dan detail tiap komponen tersedia di berkas
+      <a href="https://github.com/TrashAlpha/Capstone-OJS-Scanner/blob/main/ARCHITECTURE.md" target="_blank" rel="noopener"><code>ARCHITECTURE.md</code></a>.
+    </p>
+  </section>
+
+  <!-- ===================== TEKNOLOGI ===================== -->
+  <section id="teknologi" class="section alt">
+    <div class="section-head">
+      <span class="eyebrow">Teknologi</span>
+      <h2>Tech Stack</h2>
+    </div>
+    <div class="stack-grid">
+      <div class="stack-col">
+        <h3>Backend Pemindai</h3>
+        <ul>
+          <li>Python 3 + Flask</li>
+          <li>Nuclei v3 (Go binary)</li>
+          <li>Template YAML kustom OJS</li>
+          <li>Google Gemini (gemini-2.5-flash)</li>
+        </ul>
+      </div>
+      <div class="stack-col">
+        <h3>Dashboard</h3>
+        <ul>
+          <li>Laravel (PHP 8.4)</li>
+          <li>Blade + Vite</li>
+          <li>Eloquent ORM</li>
+          <li>Laravel Scheduler</li>
+        </ul>
+      </div>
+      <div class="stack-col">
+        <h3>Database</h3>
+        <ul>
+          <li>MySQL 8.0 (dua instance)</li>
+        </ul>
+      </div>
+      <div class="stack-col">
+        <h3>Infrastruktur</h3>
+        <ul>
+          <li>Docker Compose</li>
+          <li>NGINX</li>
+          <li>Telegram Bot</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CARA KERJA ===================== -->
+  <section id="cara-kerja" class="section">
+    <div class="section-head">
+      <span class="eyebrow">Cara Kerja</span>
+      <h2>Alur Pemindaian</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Inisiasi Scan</h3>
+          <p>Pengguna memilih target dan tipe pemindaian (eksternal, internal, atau full) dari Dashboard.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Eksekusi Pemindai</h3>
+          <p>Scanner Service menjalankan Nuclei + modul Python terhadap OJS, secara asinkron di latar belakang.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Pengayaan LLM</h3>
+          <p>Temuan mentah dikirim ke Google Gemini untuk mendapatkan konteks, dampak, dan rekomendasi.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Penilaian Risiko</h3>
+          <p>Risk Engine menghitung skor CVSS, mengklasifikasi severity, dan menyimpan hasil ke database.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h3>Notifikasi &amp; Laporan</h3>
+          <p>Temuan Critical memicu peringatan Telegram; hasil lengkap divisualisasikan di Dashboard.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CAKUPAN ===================== -->
+  <section id="cakupan" class="section alt">
+    <div class="section-head">
+      <span class="eyebrow">Cakupan Kerentanan</span>
+      <h2>Jenis Celah yang Dideteksi</h2>
+    </div>
+    <div class="vuln-grid">
+      <div class="vuln"><span class="vuln-tag">XSS</span><p>Stored &amp; Reflected Cross-Site Scripting</p></div>
+      <div class="vuln"><span class="vuln-tag">SQLi</span><p>SQL Injection</p></div>
+      <div class="vuln"><span class="vuln-tag">CSRF</span><p>Cross-Site Request Forgery</p></div>
+      <div class="vuln"><span class="vuln-tag">XXE</span><p>XML External Entity</p></div>
+      <div class="vuln"><span class="vuln-tag">LFI</span><p>Local File Inclusion</p></div>
+      <div class="vuln"><span class="vuln-tag">SSRF</span><p>Server-Side Request Forgery</p></div>
+      <div class="vuln"><span class="vuln-tag">IDOR</span><p>Insecure Direct Object Reference</p></div>
+      <div class="vuln"><span class="vuln-tag">Redirect</span><p>Open Redirect</p></div>
+      <div class="vuln"><span class="vuln-tag">Upload</span><p>Unrestricted File Upload</p></div>
+      <div class="vuln"><span class="vuln-tag">Access</span><p>Broken Access Control</p></div>
+      <div class="vuln"><span class="vuln-tag">Email</span><p>Email Header Injection</p></div>
+      <div class="vuln"><span class="vuln-tag">Recon</span><p>Enumerasi Plugin &amp; Versi</p></div>
+    </div>
+    <p class="diagram-note">
+      Mencakup beberapa CVE OJS terverifikasi, antara lain CVE-2024-24511, CVE-2024-24512,
+      CVE-2024-25434, CVE-2023-5894, dan CVE-2022-24181.
+    </p>
+  </section>
+
+  <!-- ===================== TIM ===================== -->
+  <section id="tim" class="section">
+    <div class="section-head">
+      <span class="eyebrow">Tim</span>
+      <h2>Pengembang</h2>
+      <p class="section-desc">Capstone Project — silakan sesuaikan nama dan peran anggota di bawah ini.</p>
+    </div>
+    <!-- TODO: ganti nama, NIM, dan peran sesuai anggota tim -->
+    <div class="team-grid">
+      <div class="member">
+        <div class="avatar">AR</div>
+        <h3>Muhammad Althaf Izzur Rizal</h3>
+        <p class="role">Devops dan Backend Engineer</p>
+      </div>
+      <div class="member">
+        <div class="avatar">A2</div>
+        <h3>Zaid Ilman Faqih Umar</h3>
+        <p class="role">UI/UX Designer & Governance Lead</p>
+      </div>
+      <div class="member">
+        <div class="avatar">A3</div>
+        <h3>Muhammad Dzaki Fadhlurrohman</h3>
+        <p class="role">Endpoint Validation & Bot Scanner</p>
+      </div>
+      <div class="member">
+        <div class="avatar">A4</div>
+        <h3>Intan Desi Purnomo</h3>
+        <p class="role">Risk Engine & Notif Telegram</p>
+      </div>
+      <div class="member">
+        <div class="avatar">A5</div>
+        <h3>Muhammad Zikri Amin</h3>
+        <p class="role">Internal Security Bot</p>
+      </div>
+      <div class="member">
+        <div class="avatar">A6</div>
+        <h3>Yusrizal Harits Firdaus</h3>
+        <p class="role">Bot Scanner & Eksternal Security Bot</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>
+        <div class="brand">
+          <span class="brand-mark">OJS</span>
+          <span class="brand-text">Security Scanner</span>
+        </div>
+        <p class="footer-desc">Pipeline pemindaian keamanan otomatis untuk Open Journal Systems.</p>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/TrashAlpha/Capstone-OJS-Scanner" target="_blank" rel="noopener">Repository</a>
+        <a href="https://github.com/TrashAlpha/Capstone-OJS-Scanner/blob/main/ARCHITECTURE.md" target="_blank" rel="noopener">Arsitektur</a>
+        <a href="#hero">Kembali ke Atas</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2026 Capstone OJS Security Scanner. Dibuat untuk tujuan edukasi &amp; pengujian keamanan terotorisasi.
+    </div>
+  </footer>
+
+  <!-- ===================== MERMAID ===================== -->
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        fontFamily: 'Inter, sans-serif',
+        background: '#0d1117',
+        primaryColor: '#1b2540'
+      }
+    });
+  </script>
+</body>
+</html>
