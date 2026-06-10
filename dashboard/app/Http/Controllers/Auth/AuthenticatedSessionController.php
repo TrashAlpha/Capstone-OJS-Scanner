@@ -28,7 +28,10 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Selalu arahkan ke dashboard. intended() tidak dipakai karena NGINX
+        // memotong prefix /dashboard sehingga intended URL tersimpan sebagai
+        // http://localhost/ (root) dan akan bocor ke halaman OJS.
+        return redirect()->route('dashboard');
     }
 
     /**

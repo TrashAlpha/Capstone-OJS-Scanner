@@ -7,7 +7,7 @@ services:
     container_name: nginx-proxy
     restart: always
     ports:
-      - "8080:80"
+      - "80:80"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
@@ -162,8 +162,8 @@ services:
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
-      APP_URL: http://localhost:8080/dashboard
-      ASSET_URL: http://localhost:8080/dashboard
+      APP_URL: http://localhost/dashboard
+      ASSET_URL: http://localhost/dashboard
       DB_CONNECTION: mysql
       DB_HOST: app-db
       DB_PORT: 3306

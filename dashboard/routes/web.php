@@ -6,12 +6,8 @@ use App\Http\Controllers\ScanScheduleController;
 use App\Http\Controllers\TelegramIntegrationController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect()->route('dashboard');
-});
-
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/scanner/logs', [ScannerController::class, 'logs'])->name('scanner.logs');
     Route::get('/scanner/run', [ScannerController::class, 'run'])->name('scanner.run');
     Route::post('/scanner/run', [ScannerController::class, 'execute'])->name('scanner.execute');
